@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         Alza Benefit Prices
+// @author       Dexnis
 // @namespace    local.alza-ceny
-// @version      1.0.0
+// @version      1.0.1
 // @description  Userscript pro Alza.cz, který přehledně zobrazuje ceny a procentuální slevy jednotlivých benefitních úrovní (Gold, Silver, Bronze a ISIC) přímo na stránce produktu.
 // @compatible   chrome
 // @compatible   edge
@@ -76,7 +77,9 @@
   let panel = null;
   let pending = [];
 
-  function productId(pathname) {
+  function productId(pathname, search = '') {
+    const variant = new URLSearchParams(search).get('dq');
+    if (/^\d+$/.test(variant || '')) return variant;
     return pathname.match(/-d(\d+)(?:\.htm|\/|$)/i)?.[1] || null;
   }
 
@@ -426,7 +429,7 @@
   }
 
   function sync() {
-    const id = productId(location.pathname);
+    const id = productId(location.pathname, location.search);
     if (id !== activeId) {
       cancel();
       panel?.host.remove(); panel = null; activeId = id;
