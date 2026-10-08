@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Alza Benefit Prices
+// @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    local.alza-ceny
-// @version      1.0.1
+// @version      1.0.2
 // @description  Userscript pro Alza.cz, který přehledně zobrazuje ceny a procentuální slevy jednotlivých benefitních úrovní (Gold, Silver, Bronze a ISIC) přímo na stránce produktu.
 // @compatible   chrome
 // @compatible   edge
@@ -57,6 +58,7 @@
 
   const TIERS = [
     { name: 'Gold', pgrik: 'p_pg4_e6c95', endpoint: 'detailPriceInfoV3' },
+    { name: 'Silver', pgrik: 'p_pg3_36eef', endpoint: 'detailPriceInfoV3' },
     { name: 'ISIC', pgrik: 'p_pg3is1_2b2fc', endpoint: 'detailPriceInfoV3' },
     { name: 'Bronze', pgrik: 'p_pg5_44266', endpoint: 'detailPriceInfoV3' },
     { name: 'B2B', pgrik: 'p_pg6_6ce49', endpoint: 'detailPriceInfoV3', badge: 'isic' },

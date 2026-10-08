@@ -1,6 +1,6 @@
 # Alza Benefit Prices
 
-Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, ISIC, Bronze, B2B a Basic včetně procentuálních slev. Ceny automaticky seřadí od nejnižší.
+Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev. Ceny automaticky seřadí od nejnižší.
 
 ## Instalace
 
