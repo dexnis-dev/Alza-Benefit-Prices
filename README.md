@@ -4,7 +4,7 @@ Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí c
 
 ## Ukázka userscriptu
 
-<img src="./fotka.png" alt="Ukázka Alza Benefit Prices" width="400">
+<img src="./fotka.png" alt="Ukázka Alza Benefit Prices" width="500">
 
 ## Instalace
 
