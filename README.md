@@ -1,6 +1,10 @@
 # Alza Benefit Prices
 
-Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev. Ceny automaticky seřadí od nejnižší.
+Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev.
+
+## Ukázka userscriptu
+
+![Ukázka Alza Benefit Prices](./fotka.png)
 
 ## Instalace
 
@@ -26,13 +30,11 @@ Pokud se instalace nenabídne, zkopíruj celý obsah skriptu do editoru Userscri
 
 ## Nastavení
 
-Ikona ozubeného kolečka otevře dvě sekce:
-
 - **Ceníky:** zapnutí a vypnutí jednotlivých ceníků.
 - **Akce:** zapnutí a vypnutí AlzaPlus+ a Cashback/Výkup.
 
 Nastavení se ukládá automaticky. Skript vybere nejnižší cenu z povolených akcí. Pokud mají všechny načtené ceníky stejnou cenu, zobrazí místo tabulky krátkou zprávu.
 
-Podporuje také mobilní verze m.alza.cz a m.alza.sk.
+Podporuje také mobilní verze m.alza.cz a m.alza.sk
 
-Vytvořil Dexnis.
+Vytvořil Dexnis
