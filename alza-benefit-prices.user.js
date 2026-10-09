@@ -3,7 +3,9 @@
 // @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    local.alza-ceny
-// @version      1.1.0
+// @version      1.1.1
+// @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
+// @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev.
 // @compatible   chrome
 // @compatible   edge
@@ -229,6 +231,11 @@
     return rows.filter(row => row.valid && !row.tr.hidden).sort((a, b) => a.amount - b.amount);
   }
 
+  async function writeClipboard(text) {
+    if (!navigator.clipboard?.writeText) throw new Error('Clipboard API není dostupné.');
+    await navigator.clipboard.writeText(text);
+  }
+
   function promoLabel(result) {
     if (!result.promo) return '';
     return result.priceType === 4 ? 'S AlzaPlus+' : result.coupon
@@ -349,56 +356,46 @@
     gear.setAttribute('aria-controls', settings.id);
     const state = { host, rows, table, section, credit, notice, settings, copy, originalRow, originalPrice, originalAmount: null, cache: new Map(), loaded: false };
     copy.onclick = async () => {
-      const visible = visibleRows(rows);
-      if (!state.commonPrice && (table.hidden || !visible.length)) return;
-      const title = document.querySelector('h1')?.textContent.trim() || 'Produkt Alza';
-      const lines = ['**' + title + '**', ''];
-      if (state.commonPrice) {
-        const result = state.commonPrice;
-        const discounted = result.discountPercent > 0;
-        lines.push('**' + (discounted ? 'Cena po slevě: ' : 'Cena: ') + formatPrice(result.amount) + '**'
-          + (discounted ? ' (' + formatDiscount(result.discountPercent) + ')' : ''));
-        if (result.promo) lines.push('- ' + promoLabel(result));
-      } else {
-        const labels = visible.map(row => promoLabel(row.result));
-        const sharedPromo = labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
-        for (const [index, row] of visible.entries()) {
-          const result = row.result;
-          const discount = formatDiscount(result.discountPercent);
-          lines.push(row.displayName + ': **' + formatPrice(row.amount) + '**' + (discount ? ' (' + discount + ')' : ''));
-          if (!sharedPromo && labels[index]) lines.push('- ' + labels[index]);
-        }
-        if (sharedPromo) lines.push('', '- ' + sharedPromo);
-      }
-      if (state.originalAmount !== null) {
-        lines.push('', 'Původní cena: ~~' + formatPrice(state.originalAmount) + '~~');
-      }
-      const url = new URL(location.href);
-      for (const key of [...url.searchParams.keys()]) if (key !== 'dq') url.searchParams.delete(key);
-      url.hash = '';
-      lines.push('', 'Odkaz ➤ ' + url.href);
       try {
-        const text = lines.join('\n');
-        try {
-          if (!navigator.clipboard?.writeText) throw new Error('Clipboard API není dostupné.');
-          await navigator.clipboard.writeText(text);
-        } catch {
-          const textarea = node('textarea', text, document.body);
-          textarea.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
-          textarea.readOnly = true;
-          try {
-            textarea.select();
-            textarea.setSelectionRange(0, text.length);
-            if (!document.execCommand('copy')) throw new Error('Kopírování selhalo.');
-          } finally { textarea.remove(); copy.focus(); }
+        const visible = visibleRows(rows);
+        if (!state.commonPrice && (table.hidden || !visible.length)) return;
+        const title = document.querySelector('h1')?.textContent.trim() || 'Produkt Alza';
+        const lines = ['**' + title + '**', ''];
+        if (state.commonPrice) {
+          const result = state.commonPrice;
+          const discounted = result.discountPercent > 0;
+          lines.push('**' + (discounted ? 'Cena po slevě: ' : 'Cena: ') + formatPrice(result.amount) + '**'
+            + (discounted ? ' (' + formatDiscount(result.discountPercent) + ')' : ''));
+          if (result.promo) lines.push('- ' + promoLabel(result));
+        } else {
+          const labels = visible.map(row => promoLabel(row.result));
+          const sharedPromo = labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
+          for (const [index, row] of visible.entries()) {
+            const result = row.result;
+            const discount = formatDiscount(result.discountPercent);
+            lines.push(row.displayName + ': **' + formatPrice(row.amount) + '**' + (discount ? ' (' + discount + ')' : ''));
+            if (!sharedPromo && labels[index]) lines.push('- ' + labels[index]);
+          }
+          if (sharedPromo) lines.push('', '- ' + sharedPromo);
         }
+        if (state.originalAmount !== null) {
+          lines.push('', 'Původní cena: ~~' + formatPrice(state.originalAmount) + '~~');
+        }
+        const url = new URL(location.href);
+        const variant = url.searchParams.get('dq');
+        url.search = '';
+        if (variant !== null) url.searchParams.set('dq', variant);
+        url.hash = '';
+        lines.push('', 'Odkaz ➤ ' + url.href);
+        const text = lines.join('\n');
+        await writeClipboard(text);
         copy.title = 'Zkopírováno';
         copy.setAttribute('aria-label', 'Zkopírováno');
       } catch (error) {
         copy.title = 'Kopírování selhalo — zkus to znovu';
         copy.setAttribute('aria-label', copy.title);
         console.warn('[Alza Benefit Prices] Kopírování: ' + error.message);
-      }
+      } finally { copy.focus({ preventScroll: true }); }
     };
     gear.onclick = () => {
       settings.hidden = !settings.hidden;
@@ -443,7 +440,7 @@
     actionCheckbox('Výkup', tradeInPromos, 'trade-in-promos', value => { tradeInPromos = value; });
     const info = node('div', null, settings);
     info.className = 'settings-info';
-    node('span', 'Verze 1.1.0', info);
+    node('span', 'Verze 1.1.1', info);
     const sourceLink = node('a', 'Zdrojový kód', info);
     sourceLink.href = 'https://github.com/dexnis-dev/Alza-Benefit-Prices/';
     sourceLink.target = '_blank';
