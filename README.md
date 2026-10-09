@@ -16,8 +16,11 @@ Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí c
    - [Chrome, Opera a další prohlížeče Chromium](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag)
    - [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/violentmonkey/eeagobfjdenkkddmbclomhiblgggliao)
    - [Firefox](https://addons.mozilla.org/firefox/addon/violentmonkey/)
-2. Otevři instalační odkaz výše a potvrď instalaci ve Violentmonkey.
-3. Otevři nebo obnov stránku produktu na Alze.
+2. V prohlížečích založených na Chromiu otevři správu rozšíření, najdi **Violentmonkey**, otevři jeho **Podrobnosti** a zapni **Povolit uživatelské skripty**, pokud je tato volba dostupná. Například v Chromu otevřeš správu rozšíření přes `chrome://extensions`, v Edge přes `edge://extensions`. Ve Firefoxu tento krok není potřeba.
+3. Otevři instalační odkaz výše a potvrď instalaci ve Violentmonkey.
+4. Otevři nebo obnov stránku produktu na Alze.
+
+Volba **Povolit uživatelské skripty** je oprávnění prohlížeče, které rozšíření umožní spouštět vlastní skripty. Pokud ji prohlížeč vyžaduje a zůstane vypnutá, userscript nebude fungovat.
 
 ### Safari
 
@@ -31,7 +34,7 @@ Pokud se instalace nenabídne, zkopíruj celý obsah skriptu do editoru Userscri
 ## Nastavení
 
 - **Ceníky:** zapnutí a vypnutí jednotlivých ceníků.
-- **Akce:** zapnutí a vypnutí AlzaPlus+ a Cashback/Výkup.
+- **Akce:** samostatné zapnutí a vypnutí AlzaPlus+, Cashbacku a Výkupu.
 
 Nastavení se ukládá automaticky. Skript vybere nejnižší cenu z povolených akcí. Pokud mají všechny načtené ceníky stejnou cenu, zobrazí místo tabulky krátkou zprávu.
 

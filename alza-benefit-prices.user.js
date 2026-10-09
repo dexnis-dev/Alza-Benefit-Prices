@@ -3,19 +3,25 @@
 // @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    local.alza-ceny
-// @version      1.0.3
-// @description  Userscript pro Alza.cz, který přehledně zobrazuje ceny a procentuální slevy jednotlivých benefitních úrovní (Gold, Silver, Bronze a ISIC) přímo na stránce produktu.
+// @version      1.1.0
+// @description  Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev.
 // @compatible   chrome
 // @compatible   edge
 // @compatible   firefox
 // @compatible   opera
 // @compatible   safari
-// @match        https://www.alza.cz/*
-// @match        https://alza.cz/*
-// @match        https://m.alza.cz/*
-// @match        https://www.alza.sk/*
-// @match        https://alza.sk/*
-// @match        https://m.alza.sk/*
+// @match        https://www.alza.cz/*-d*.htm*
+// @match        https://www.alza.cz/*?*dq=*
+// @match        https://alza.cz/*-d*.htm*
+// @match        https://alza.cz/*?*dq=*
+// @match        https://m.alza.cz/*-d*.htm*
+// @match        https://m.alza.cz/*?*dq=*
+// @match        https://www.alza.sk/*-d*.htm*
+// @match        https://www.alza.sk/*?*dq=*
+// @match        https://alza.sk/*-d*.htm*
+// @match        https://alza.sk/*?*dq=*
+// @match        https://m.alza.sk/*-d*.htm*
+// @match        https://m.alza.sk/*?*dq=*
 // @connect      webapi.alza.cz
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
@@ -31,9 +37,13 @@
 (async () => {
   'use strict';
 
+  // Do not initialize settings, requests or observers outside product pages.
+  if (!productId(location.pathname, location.search)) return;
+
   const country = /(?:^|\.)alza\.sk$/i.test(location.hostname) ? 'SK' : 'CZ';
   const locale = country === 'SK' ? 'sk-SK' : 'cs-CZ';
   const discountFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  const priceFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
   const mobile = /^m\.alza\.(?:cz|sk)$/i.test(location.hostname);
   const CACHE_TTL = 60000;
 
@@ -53,7 +63,7 @@
   let settingWrites = Promise.resolve();
   function saveSetting(key, value) {
     settingWrites = settingWrites.then(() => setSetting(key, value))
-      .catch(error => console.warn('[Alza ceny] Nastavení: ' + error.message));
+      .catch(error => console.warn('[Alza Benefit Prices] Nastavení: ' + error.message));
   }
 
   const TIERS = [
@@ -64,16 +74,19 @@
     { name: 'B2B', pgrik: 'p_pg6_6ce49', endpoint: 'detailPriceInfoV3', badge: 'isic' },
     { name: 'Basic', pgrik: 'p__26752', endpoint: 'detailPriceInfoV3', reference: true, badge: 'regular' },
   ];
-  const [saved, savedPlus, savedCashback] = await Promise.all([
+  const [saved, savedPlus, savedCashback, savedCashbackPrice, savedTradeIn] = await Promise.all([
     getSetting('enabled-price-tiers', {}),
     getSetting('alza-plus-promos', true),
     getSetting('cashback-promos', true),
+    getSetting('cashback-price-promos', null),
+    getSetting('trade-in-promos', null),
   ]);
   const enabled = Object.fromEntries(TIERS.map(tier => [tier.name,
     (tier.name === 'Basic' ? saved?.Basic ?? saved?.BASIC ?? saved?.['Běžná cena'] : saved?.[tier.name]) !== false,
   ]));
   let alzaPlusPromos = savedPlus !== false;
-  let cashbackPromos = savedCashback !== false;
+  let cashbackPromos = (savedCashbackPrice ?? savedCashback) !== false;
+  let tradeInPromos = (savedTradeIn ?? savedCashback) !== false;
   let activeId = null;
   let generation = 0;
   let panel = null;
@@ -127,7 +140,8 @@
     let selected = mainCandidate;
     for (const promo of Array.isArray(pricing.promoPrices) ? pricing.promoPrices : []) {
       if (!alzaPlusPromos && promo?.priceType === 4) continue;
-      if (!cashbackPromos && promo?.priceType === 2) continue;
+      if (!cashbackPromos && promo?.priceType === 1) continue;
+      if (!tradeInPromos && promo?.priceType === 2) continue;
       const next = candidate(promo, true);
       if (next && (!selected || next.amount < selected.amount)) selected = next;
     }
@@ -138,8 +152,11 @@
     if (!reference && (main?.priceType === 7 || main?.priceType === 4)) {
       if (!selected || !discountBase || selected.amount === discountBase.amount) return { hidden: true };
     }
-    if (selected) selected.discountPercent = discountBase && discountBase.amount > 0 && discountBase.amount > selected.amount
-      ? (discountBase.amount - selected.amount) / discountBase.amount * 100 : null;
+    if (selected) {
+      selected.discountPercent = discountBase && discountBase.amount > 0 && discountBase.amount > selected.amount
+        ? (discountBase.amount - selected.amount) / discountBase.amount * 100 : null;
+      selected.discountBaseAmount = discountBase?.amount ?? null;
+    }
     return selected;
   }
 
@@ -200,6 +217,45 @@
     return item;
   }
 
+  function formatPrice(amount) {
+    return priceFormat.format(amount) + (country === 'SK' ? ' €' : ' Kč');
+  }
+
+  function formatDiscount(percent) {
+    return percent > 0 ? '−' + discountFormat.format(percent) + ' %' : '';
+  }
+
+  function visibleRows(rows) {
+    return rows.filter(row => row.valid && !row.tr.hidden).sort((a, b) => a.amount - b.amount);
+  }
+
+  function promoLabel(result) {
+    if (!result.promo) return '';
+    return result.priceType === 4 ? 'S AlzaPlus+' : result.coupon
+      ? 'S kódem ' + result.coupon : result.name || 'Akční cena';
+  }
+
+  function svgIcon(path, withCenter = false) {
+    const namespace = 'http://www.w3.org/2000/svg';
+    const icon = document.createElementNS(namespace, 'svg');
+    for (const [key, value] of Object.entries({
+      viewBox: '0 0 24 24', width: '18', height: '18', fill: 'none',
+      stroke: 'currentColor', 'stroke-width': '1.6', 'stroke-linejoin': 'round',
+      'aria-hidden': 'true', focusable: 'false',
+    })) icon.setAttribute(key, value);
+    const outline = document.createElementNS(namespace, 'path');
+    outline.setAttribute('d', path);
+    icon.append(outline);
+    if (withCenter) {
+      const center = document.createElementNS(namespace, 'circle');
+      center.setAttribute('cx', '12');
+      center.setAttribute('cy', '12');
+      center.setAttribute('r', '3');
+      icon.append(center);
+    }
+    return icon;
+  }
+
   function mount(host) {
     // Hlídačshopů's content lives in a closed shadow root; use its outer host.
     const tracker = document.querySelector('[data-hs], #hlidacShopu');
@@ -228,12 +284,16 @@
       *{box-sizing:border-box;font-family:inherit}section{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:8px}
       table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0}th:first-child{width:38%}th:nth-child(2){width:36%}th:last-child{width:26%}th,td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid #e8e8e8}th{font-size:12px;font-weight:500;color:#979797}td:nth-child(2){font-size:16px;font-weight:700;color:#ca0505;overflow-wrap:anywhere}tbody tr:last-child td{border-bottom:0}.discount{white-space:nowrap}.discount-value{display:inline-block;padding:4px 8px;border-radius:4px;background:#5dbd2f;color:#fff;font-size:15px;font-weight:700}.error{color:#ca0505;font-weight:400!important;font-size:12px}
       .tier-badge{display:inline-block;padding:5px 10px;border-radius:4px;font-size:14px;font-weight:600;line-height:1.2;text-transform:uppercase;background:#c2c2c2;color:#171717}.tier-gold{background:#ffd500;color:#171717}.tier-silver{background:#c2c2c2;color:#171717}.tier-bronze{background:#d2822d;color:#fff}.tier-isic{background:#3cba9c;color:#fff}.tier-regular{background:#f0f0f0;color:#606060}
-      .promo-label{display:block;margin-top:5px;font-size:12px;font-weight:400;color:#979797;line-height:1.4}.credit{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:0 8px 2px;font-size:12px;color:#979797}
+      .promo-label{display:block;margin-top:5px;font-size:12px;font-weight:400;color:#979797;line-height:1.4}.credit{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:0 8px 2px;font-size:12px;color:#979797}.footer-buttons{display:flex;gap:6px;flex-shrink:0}
       .gear{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;color:#979797;font-size:20px;cursor:pointer}.gear:hover,.gear[aria-expanded="true"]{background:#f5f5f5;color:#000}.gear:focus-visible,input:focus-visible{outline:2px solid #545fef;outline-offset:2px}.settings{display:grid;gap:16px;padding:12px 8px;margin-top:8px;border-top:1px solid #e8e8e8}.settings label{display:flex;gap:7px;align-items:center;cursor:pointer}.settings input{accent-color:#545fef;width:16px;height:16px;margin:0}.settings-only{border:0;padding:0}.settings-only .credit{margin-top:0;justify-content:flex-end}
       @media(max-width:420px){section{padding:6px}th,td{padding:10px 6px}.tier-badge{padding:5px 7px;font-size:12px}.discount-value{padding:4px 6px;font-size:13px}.promo-label{font-size:11px;overflow-wrap:anywhere}}
-      .settings fieldset{min-width:0;margin:0;padding:0;border:0}.settings legend{padding:0;margin-bottom:8px;color:#606060;font-size:12px;font-weight:600}.settings-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px}.settings label{min-height:30px}.settings-actions{padding-top:12px!important;border-top:1px solid #e8e8e8!important}.settings-actions .settings-options{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:420px){.settings-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      .settings fieldset{width:100%;min-width:0;margin:0;padding:0;border:0}.settings legend{padding:0;margin-bottom:8px;color:#606060;font-size:12px;font-weight:600}.settings-options{display:grid;width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px}.settings label{min-height:30px}.settings-actions{padding-top:12px!important;border-top:1px solid #e8e8e8!important}@media(max-width:420px){.settings-options{column-gap:8px}.settings label{gap:5px;font-size:12px}.settings input{flex-shrink:0}}
+      .settings-info{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding-top:12px;border-top:1px solid #e8e8e8;color:#979797;font-size:12px}.settings-info a{color:inherit;text-decoration:underline;text-underline-offset:2px}.settings-info a:hover{color:inherit}.settings-info a:focus-visible{outline:2px solid #545fef;outline-offset:2px}
       [hidden]{display:none!important}
       .price-notice{flex:1;color:#606060;font-size:13px}.equal-prices .credit{margin-top:0;padding:0 4px;justify-content:flex-start}.equal-prices .gear{flex-shrink:0}
+      thead th{padding-top:4px}
+      tfoot td{border-bottom:0;border-top:1px solid #e8e8e8;padding-top:6px;padding-bottom:0;color:#979797;font-size:12px}tfoot td:nth-child(2){color:#979797;font-size:14px;font-weight:400}
+      section:has(table:not([hidden]) tfoot tr:not([hidden])) .credit{margin-top:6px}
     `, shadow);
     const section = node('section', null, shadow);
     section.id = 'price-table';
@@ -247,36 +307,37 @@
     const rows = TIERS.map(tier => {
       const tr = node('tr', null, tbody);
       const label = node('td', null, tr);
-      node('div', tier.name.toUpperCase(), label).className = 'tier-badge tier-' + (tier.badge || tier.name.toLowerCase());
+      const badge = node('div', tier.name.toUpperCase(), label);
+      badge.className = 'tier-badge tier-' + (tier.badge || tier.name.toLowerCase());
       const price = node('td', '—', tr);
       price.setAttribute('aria-live', 'polite');
       const discount = node('td', '—', tr);
       discount.className = 'discount';
-      return { tier, price, discount, tr };
+      return { tier, price, discount, tr, badge, displayName: tier.name.toUpperCase() };
     });
+    const originalRow = node('tr', null, node('tfoot', null, table));
+    originalRow.hidden = true;
+    node('td', 'Původní cena', originalRow);
+    const originalPrice = node('s', null, node('td', null, originalRow));
+    node('td', '', originalRow);
     const footer = node('footer', null, section);
     footer.className = 'credit';
-    const gear = node('button', null, footer);
-    const svgNamespace = 'http://www.w3.org/2000/svg';
-    const gearIcon = document.createElementNS(svgNamespace, 'svg');
-    for (const [key, value] of Object.entries({
-      viewBox: '0 0 24 24', width: '18', height: '18', fill: 'none',
-      stroke: 'currentColor', 'stroke-width': '1.6', 'stroke-linejoin': 'round',
-      'aria-hidden': 'true', focusable: 'false',
-    })) gearIcon.setAttribute(key, value);
-    const outline = document.createElementNS(svgNamespace, 'path');
-    outline.setAttribute('d', 'M19.42 9.59L21.85 10.26L21.85 13.74L19.42 14.41L18.95 15.54L20.19 17.74L17.74 20.19L15.54 18.95L14.41 19.42L13.74 21.85L10.26 21.85L9.59 19.42L8.46 18.95L6.26 20.19L3.81 17.74L5.05 15.54L4.58 14.41L2.15 13.74L2.15 10.26L4.58 9.59L5.05 8.46L3.81 6.26L6.26 3.81L8.46 5.05L9.59 4.58L10.26 2.15L13.74 2.15L14.41 4.58L15.54 5.05L17.74 3.81L20.19 6.26L18.95 8.46Z');
-    const center = document.createElementNS(svgNamespace, 'circle');
-    center.setAttribute('cx', '12');
-    center.setAttribute('cy', '12');
-    center.setAttribute('r', '3');
-    gearIcon.append(outline, center);
-    gear.append(gearIcon);
+    const buttons = node('div', null, footer);
+    buttons.className = 'footer-buttons';
+    const gear = node('button', null, buttons);
+    gear.append(svgIcon('M19.42 9.59L21.85 10.26L21.85 13.74L19.42 14.41L18.95 15.54L20.19 17.74L17.74 20.19L15.54 18.95L14.41 19.42L13.74 21.85L10.26 21.85L9.59 19.42L8.46 18.95L6.26 20.19L3.81 17.74L5.05 15.54L4.58 14.41L2.15 13.74L2.15 10.26L4.58 9.59L5.05 8.46L3.81 6.26L6.26 3.81L8.46 5.05L9.59 4.58L10.26 2.15L13.74 2.15L14.41 4.58L15.54 5.05L17.74 3.81L20.19 6.26L18.95 8.46Z', true));
     gear.className = 'gear';
     gear.type = 'button';
     gear.title = 'Nastavení ceníků';
     gear.setAttribute('aria-label', 'Nastavení ceníků');
     gear.setAttribute('aria-expanded', 'false');
+    const copy = node('button', null, buttons);
+    copy.className = 'gear';
+    copy.type = 'button';
+    copy.title = 'Kopírovat nabídku';
+    copy.setAttribute('aria-label', 'Kopírovat nabídku');
+    copy.hidden = true;
+    copy.append(svgIcon('M8 8H20V21H8Z M16 8V3H3V16H8'));
     const notice = node('span', 'Všechny ceníky mají stejnou cenu', footer);
     notice.className = 'price-notice';
     notice.hidden = true;
@@ -286,7 +347,59 @@
     settings.id = 'price-tier-settings';
     settings.hidden = true;
     gear.setAttribute('aria-controls', settings.id);
-    const state = { host, rows, table, section, credit, notice, settings, cache: new Map(), loaded: false };
+    const state = { host, rows, table, section, credit, notice, settings, copy, originalRow, originalPrice, originalAmount: null, cache: new Map(), loaded: false };
+    copy.onclick = async () => {
+      const visible = visibleRows(rows);
+      if (!state.commonPrice && (table.hidden || !visible.length)) return;
+      const title = document.querySelector('h1')?.textContent.trim() || 'Produkt Alza';
+      const lines = ['**' + title + '**', ''];
+      if (state.commonPrice) {
+        const result = state.commonPrice;
+        const discounted = result.discountPercent > 0;
+        lines.push('**' + (discounted ? 'Cena po slevě: ' : 'Cena: ') + formatPrice(result.amount) + '**'
+          + (discounted ? ' (' + formatDiscount(result.discountPercent) + ')' : ''));
+        if (result.promo) lines.push('- ' + promoLabel(result));
+      } else {
+        const labels = visible.map(row => promoLabel(row.result));
+        const sharedPromo = labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
+        for (const [index, row] of visible.entries()) {
+          const result = row.result;
+          const discount = formatDiscount(result.discountPercent);
+          lines.push(row.displayName + ': **' + formatPrice(row.amount) + '**' + (discount ? ' (' + discount + ')' : ''));
+          if (!sharedPromo && labels[index]) lines.push('- ' + labels[index]);
+        }
+        if (sharedPromo) lines.push('', '- ' + sharedPromo);
+      }
+      if (state.originalAmount !== null) {
+        lines.push('', 'Původní cena: ~~' + formatPrice(state.originalAmount) + '~~');
+      }
+      const url = new URL(location.href);
+      for (const key of [...url.searchParams.keys()]) if (key !== 'dq') url.searchParams.delete(key);
+      url.hash = '';
+      lines.push('', 'Odkaz ➤ ' + url.href);
+      try {
+        const text = lines.join('\n');
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error('Clipboard API není dostupné.');
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const textarea = node('textarea', text, document.body);
+          textarea.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+          textarea.readOnly = true;
+          try {
+            textarea.select();
+            textarea.setSelectionRange(0, text.length);
+            if (!document.execCommand('copy')) throw new Error('Kopírování selhalo.');
+          } finally { textarea.remove(); copy.focus(); }
+        }
+        copy.title = 'Zkopírováno';
+        copy.setAttribute('aria-label', 'Zkopírováno');
+      } catch (error) {
+        copy.title = 'Kopírování selhalo — zkus to znovu';
+        copy.setAttribute('aria-label', copy.title);
+        console.warn('[Alza Benefit Prices] Kopírování: ' + error.message);
+      }
+    };
     gear.onclick = () => {
       settings.hidden = !settings.hidden;
       gear.setAttribute('aria-expanded', String(!settings.hidden));
@@ -313,26 +426,28 @@
     node('legend', 'Akce', actionSettings);
     const actionOptions = node('div', null, actionSettings);
     actionOptions.className = 'settings-options';
-    const plusLabel = node('label', null, actionOptions);
-    const plusCheckbox = node('input', null, plusLabel);
-    plusCheckbox.type = 'checkbox';
-    plusCheckbox.checked = alzaPlusPromos;
-    node('span', 'AlzaPlus+', plusLabel);
-    plusCheckbox.onchange = () => {
-      alzaPlusPromos = plusCheckbox.checked;
-      saveSetting('alza-plus-promos', alzaPlusPromos);
-      void load(id, state);
-    };
-    const cashbackLabel = node('label', null, actionOptions);
-    const cashbackCheckbox = node('input', null, cashbackLabel);
-    cashbackCheckbox.type = 'checkbox';
-    cashbackCheckbox.checked = cashbackPromos;
-    node('span', 'Cashback/Výkup', cashbackLabel);
-    cashbackCheckbox.onchange = () => {
-      cashbackPromos = cashbackCheckbox.checked;
-      saveSetting('cashback-promos', cashbackPromos);
-      void load(id, state);
-    };
+    function actionCheckbox(labelText, checked, key, update) {
+      const label = node('label', null, actionOptions);
+      const checkbox = node('input', null, label);
+      checkbox.type = 'checkbox';
+      checkbox.checked = checked;
+      node('span', labelText, label);
+      checkbox.onchange = () => {
+        update(checkbox.checked);
+        saveSetting(key, checkbox.checked);
+        void load(id, state);
+      };
+    }
+    actionCheckbox('AlzaPlus+', alzaPlusPromos, 'alza-plus-promos', value => { alzaPlusPromos = value; });
+    actionCheckbox('Cashback', cashbackPromos, 'cashback-price-promos', value => { cashbackPromos = value; });
+    actionCheckbox('Výkup', tradeInPromos, 'trade-in-promos', value => { tradeInPromos = value; });
+    const info = node('div', null, settings);
+    info.className = 'settings-info';
+    node('span', 'Verze 1.1.0', info);
+    const sourceLink = node('a', 'Zdrojový kód', info);
+    sourceLink.href = 'https://github.com/dexnis-dev/Alza-Benefit-Prices/';
+    sourceLink.target = '_blank';
+    sourceLink.rel = 'noopener noreferrer';
     mount(host);
     return state;
   }
@@ -342,7 +457,13 @@
     const run = generation;
     state.host.hidden = !state.loaded;
     state.table.hidden = true;
-    state.rows.forEach(row => { row.tr.hidden = true; row.valid = false; row.amount = null; row.comparisonAmount = null; row.price.className = ''; row.price.textContent = 'Načítání…'; });
+    state.copy.hidden = true;
+    state.copy.title = 'Kopírovat nabídku';
+    state.copy.setAttribute('aria-label', state.copy.title);
+    state.commonPrice = null;
+    state.originalRow.hidden = true;
+    state.originalAmount = null;
+    state.rows.forEach(row => { row.tr.hidden = true; row.valid = false; row.result = null; row.amount = null; row.comparisonAmount = null; row.price.className = ''; row.price.textContent = 'Načítání…'; });
     async function loadRow(row) {
       try {
         const url = apiUrl(id, row.tier);
@@ -372,19 +493,20 @@
         row.discount.textContent = '—';
         if (result.discountPercent !== null) {
           row.discount.textContent = '';
-          node('span', '−' + discountFormat.format(result.discountPercent) + ' %', row.discount).className = 'discount-value';
+          node('span', formatDiscount(result.discountPercent), row.discount).className = 'discount-value';
         }
         if (result.promo) {
-          const label = node('span', result.priceType === 4 ? 'S AlzaPlus+' : result.coupon ? 'S kódem ' + result.coupon : result.name || 'Akční cena', row.price);
+          const label = node('span', promoLabel(result), row.price);
           label.className = 'promo-label';
         }
         row.amount = result.amount;
+        row.result = result;
         row.valid = true;
         row.tr.hidden = false;
       } catch (error) {
         if (run !== generation) return;
         row.tr.hidden = true;
-        console.warn('[Alza ceny] ' + row.tier.name + ': ' + error.message);
+        console.warn('[Alza Benefit Prices] ' + row.tier.name + ': ' + error.message);
       }
     }
     // Fetch independent tiers together, then BASIC only if a price was found.
@@ -395,13 +517,24 @@
     if (run === generation) {
       filterRows(state.rows);
       // Reorder the DOM only so ties keep the configured tier order.
-      const sorted = state.rows.filter(row => !row.tr.hidden).sort((a, b) => a.amount - b.amount);
+      const sorted = visibleRows(state.rows);
       for (const row of sorted) row.tr.parentNode.append(row.tr);
       const compared = state.rows.filter(row => row.tier.reference || enabled[row.tier.name]);
       const equalPrices = compared.length > 1 && compared.every(row =>
         row.comparisonAmount !== null && row.comparisonAmount === compared[0].comparisonAmount);
-      const hasPrices = !equalPrices && state.rows.some(row => row.valid && !row.tr.hidden);
+      const hasPrices = !equalPrices && sorted.length > 0;
+      state.commonPrice = equalPrices && basic?.valid ? basic.result : null;
+      const bases = sorted.map(row => row.result.discountBaseAmount).filter(amount => amount !== null);
+      const originalAmount = basic?.valid ? basic.result.discountBaseAmount ?? basic.amount
+        : bases.length && bases.every(amount => amount === bases[0]) ? bases[0] : null;
+      state.originalAmount = (hasPrices || state.commonPrice) && originalAmount !== null
+        && (state.commonPrice ? state.commonPrice.amount < originalAmount : sorted.some(row => row.amount < originalAmount))
+        ? originalAmount : null;
+      state.originalRow.hidden = state.originalAmount === null;
+      state.originalPrice.textContent = state.originalAmount === null ? ''
+        : formatPrice(state.originalAmount);
       state.table.hidden = !hasPrices;
+      state.copy.hidden = !hasPrices && !state.commonPrice;
       state.credit.hidden = !hasPrices;
       state.notice.hidden = !equalPrices;
       state.section.classList.toggle('equal-prices', equalPrices);
@@ -414,10 +547,13 @@
   function filterRows(rows) {
     const basic = rows.find(row => row.tier.reference);
     for (const row of rows) {
+      row.displayName = row.tier.name.toUpperCase();
+      if (row.badge) row.badge.textContent = row.displayName;
       let visible = row.valid && enabled[row.tier.name];
       if (['Gold', 'Silver', 'Bronze', 'ISIC'].includes(row.tier.name)) {
         visible = visible && basic?.valid && row.amount < basic.amount;
       }
+      if (row.tier.reference) visible = visible && row.result?.discountPercent > 0;
       row.tr.hidden = !visible;
     }
     const bronze = rows.find(row => row.tier.name === 'Bronze');
@@ -426,6 +562,18 @@
     const isic = rows.find(row => row.tier.name === 'ISIC');
     if (b2b?.valid && basic?.valid && b2b.amount === basic.amount
       && isic?.valid && !isic.tr.hidden && isic.amount < basic.amount) b2b.tr.hidden = true;
+    const silver = rows.find(row => row.tier.name === 'Silver');
+    if (isic?.valid && silver?.valid && !silver.tr.hidden && isic.amount === silver.amount) {
+      isic.tr.hidden = true;
+    }
+    const compared = rows.filter(row => !row.tier.reference && enabled[row.tier.name]);
+    const distinct = compared.filter(row => row.comparisonAmount !== basic?.amount);
+    if (basic?.valid && compared.length > 1 && compared.every(row => row.comparisonAmount !== null)
+      && distinct.length === 1 && !distinct[0].tr.hidden) {
+      basic.displayName = 'OSTATNÍ';
+      if (basic.badge) basic.badge.textContent = basic.displayName;
+      basic.tr.hidden = false;
+    }
     // Keep BASIC only when there is another visible price to compare with it.
     if (basic && !rows.some(row => !row.tier.reference && !row.tr.hidden)) basic.tr.hidden = true;
   }
@@ -451,4 +599,4 @@
   window.addEventListener('pagehide', event => {
     if (!event.persisted) { clearInterval(timer); cancel(); }
   });
-})().catch(error => console.error('[Alza ceny] Spuštění: ' + error.message));
+})().catch(error => console.error('[Alza Benefit Prices] Spuštění: ' + error.message));
