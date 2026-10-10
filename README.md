@@ -35,8 +35,14 @@ Pokud se instalace nenabídne, zkopíruj celý obsah skriptu do editoru Userscri
 
 - **Ceníky:** zapnutí a vypnutí jednotlivých ceníků.
 - **Akce:** samostatné zapnutí a vypnutí AlzaPlus+, Cashbacku a Výkupu.
+- **Zobrazení:** volba **Zobrazit všechny ceníky** ukáže všechny zapnuté ceníky i tehdy, když mají stejnou cenu (jinak se místo tabulky zobrazí krátká zpráva).
+  Na počítači přibude i volba **Přesunout ceník doleva**, která panel přesune pod miniatury galerie (na mobilu není dostupná).
 
 Nastavení se ukládá automaticky. Skript vybere nejnižší cenu z povolených akcí. Pokud mají všechny načtené ceníky stejnou cenu, zobrazí místo tabulky krátkou zprávu.
+
+## Kopírování
+
+Tlačítko vedle ozubeného kola zkopíruje nabídku (název, ceny ceníků, slevy, původní cenu a odkaz na produkt) jako text pro vložení do chatu nebo e-mailu.
 
 Podporuje také mobilní verze m.alza.cz a m.alza.sk
 

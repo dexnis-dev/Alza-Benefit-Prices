@@ -3,7 +3,7 @@
 // @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    local.alza-ceny
-// @version      1.1.1
+// @version      1.2.0
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript pro Alza.cz a Alza.sk, který přímo na stránce produktu zobrazí ceny ceníků Gold, Silver, ISIC, Bronze, B2B a Basic včetně procentuálních slev.
@@ -47,7 +47,10 @@
   const discountFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const priceFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
   const mobile = /^m\.alza\.(?:cz|sk)$/i.test(location.hostname);
-  const CACHE_TTL = 60000;
+  const CACHE_TTL = 5 * 60 * 1000;
+  const CACHE_LIMIT = 60;
+  // Shared by all panels, so returning to a product reuses its prices.
+  const cache = new Map();
 
   // Safari Userscripts exposes asynchronous GM.* storage APIs.
   async function getSetting(key, fallback) {
@@ -69,19 +72,21 @@
   }
 
   const TIERS = [
-    { name: 'Gold', pgrik: 'p_pg4_e6c95', endpoint: 'detailPriceInfoV3' },
-    { name: 'Silver', pgrik: 'p_pg3_36eef', endpoint: 'detailPriceInfoV3' },
-    { name: 'ISIC', pgrik: 'p_pg3is1_2b2fc', endpoint: 'detailPriceInfoV3' },
-    { name: 'Bronze', pgrik: 'p_pg5_44266', endpoint: 'detailPriceInfoV3' },
-    { name: 'B2B', pgrik: 'p_pg6_6ce49', endpoint: 'detailPriceInfoV3', badge: 'isic' },
-    { name: 'Basic', pgrik: 'p__26752', endpoint: 'detailPriceInfoV3', reference: true, badge: 'regular' },
+    { name: 'Gold', pgrik: 'p_pg4_e6c95' },
+    { name: 'Silver', pgrik: 'p_pg3_36eef' },
+    { name: 'ISIC', pgrik: 'p_pg3is1_2b2fc' },
+    { name: 'Bronze', pgrik: 'p_pg5_44266' },
+    { name: 'B2B', pgrik: 'p_pg6_6ce49', badge: 'isic' },
+    { name: 'Basic', pgrik: 'p__26752', reference: true, badge: 'regular' },
   ];
-  const [saved, savedPlus, savedCashback, savedCashbackPrice, savedTradeIn] = await Promise.all([
+  const [saved, savedPlus, savedCashback, savedCashbackPrice, savedTradeIn, savedAlways, savedBelowPhoto] = await Promise.all([
     getSetting('enabled-price-tiers', {}),
     getSetting('alza-plus-promos', true),
     getSetting('cashback-promos', true),
     getSetting('cashback-price-promos', null),
     getSetting('trade-in-promos', null),
+    getSetting('always-show-tiers', false),
+    getSetting('panel-below-photo', false),
   ]);
   const enabled = Object.fromEntries(TIERS.map(tier => [tier.name,
     (tier.name === 'Basic' ? saved?.Basic ?? saved?.BASIC ?? saved?.['Běžná cena'] : saved?.[tier.name]) !== false,
@@ -89,6 +94,9 @@
   let alzaPlusPromos = savedPlus !== false;
   let cashbackPromos = (savedCashbackPrice ?? savedCashback) !== false;
   let tradeInPromos = (savedTradeIn ?? savedCashback) !== false;
+  let alwaysShow = savedAlways === true;
+  let belowPhoto = savedBelowPhoto === true;
+  let belowPhotoOption = null;
   let activeId = null;
   let generation = 0;
   let panel = null;
@@ -101,7 +109,7 @@
   }
 
   function apiUrl(id, tier) {
-    const url = new URL(`https://webapi.alza.cz/api/commodity/v1/${id}/${tier.endpoint}`);
+    const url = new URL(`https://webapi.alza.cz/api/commodity/v1/${id}/detailPriceInfoV3`);
     url.search = new URLSearchParams({ country, pgrik: tier.pgrik, ucik: 'GB' });
     return url.href;
   }
@@ -223,6 +231,11 @@
     return priceFormat.format(amount) + (country === 'SK' ? ' €' : ' Kč');
   }
 
+  // Panel style of Alza's own prices, e.g. "549,-"; Slovak prices keep the euro sign.
+  function formatPanelPrice(amount) {
+    return country === 'SK' ? formatPrice(amount) : priceFormat.format(amount) + ',-';
+  }
+
   function formatDiscount(percent) {
     return percent > 0 ? '−' + discountFormat.format(percent) + ' %' : '';
   }
@@ -263,9 +276,45 @@
     return icon;
   }
 
+  // Hlídač shopů is injected after the page loads; re-mount as soon as a sibling appears.
+  let mountFrame = 0;
+  const mountObserver = new MutationObserver(() => {
+    if (mountFrame) return;
+    mountFrame = requestAnimationFrame(() => { mountFrame = 0; if (panel) mount(panel.host); });
+  });
+
+  // The gallery can render after the panel; retry briefly until the photo strip exists.
+  let stripRetries = 0;
+  let stripTimer = 0;
+
   function mount(host) {
+    place(host);
+    clearTimeout(stripTimer);
+    if (belowPhoto && !mobile && !photoStrip() && stripRetries++ < 12) {
+      stripTimer = setTimeout(() => { if (panel) mount(panel.host); }, 250);
+    }
+    mountObserver.disconnect();
+    if (host.parentNode) mountObserver.observe(host.parentNode, { childList: true });
+  }
+
+  // Alza's gallery classes are generated, so anchor on the stable #detailPicture wrapper.
+  function photoStrip() {
+    return document.querySelector('#detailPicture');
+  }
+
+  function place(host) {
     // Hlídačshopů's content lives in a closed shadow root; use its outer host.
     const tracker = document.querySelector('[data-hs], #hlidacShopu');
+    // Desktop only: offered whenever the photo strip is on the page.
+    const strip = mobile ? null : photoStrip();
+    if (belowPhotoOption) belowPhotoOption.hidden = !strip;
+    if (strip && belowPhoto) {
+      host.style.margin = '12px 0';
+      host.style.order = '';
+      if (strip.nextElementSibling !== host) strip.after(host);
+      return;
+    }
+    host.style.margin = mobile ? '0' : '0 0 12px';
     const before = tracker || document.querySelector('[data-react-client-component="alternativePricingModule"]');
     if (before) {
       host.style.order = before.style.order || '';
@@ -287,28 +336,99 @@
     });
     const shadow = host.attachShadow({ mode: 'open' });
     node('style', `
-      :host{display:block;clear:both;font:13px "IBM Plex Sans Var",system-ui,sans-serif;color:#000;line-height:1.4;font-kerning:normal;font-variant-numeric:lining-nums;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision}:host([hidden]){display:none!important}
-      *{box-sizing:border-box;font-family:inherit}section{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:8px}
-      table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0}th:first-child{width:38%}th:nth-child(2){width:36%}th:last-child{width:26%}th,td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid #e8e8e8}th{font-size:12px;font-weight:500;color:#979797}td:nth-child(2){font-size:16px;font-weight:700;color:#ca0505;overflow-wrap:anywhere}tbody tr:last-child td{border-bottom:0}.discount{white-space:nowrap}.discount-value{display:inline-block;padding:4px 8px;border-radius:4px;background:#5dbd2f;color:#fff;font-size:15px;font-weight:700}.error{color:#ca0505;font-weight:400!important;font-size:12px}
-      .tier-badge{display:inline-block;padding:5px 10px;border-radius:4px;font-size:14px;font-weight:600;line-height:1.2;text-transform:uppercase;background:#c2c2c2;color:#171717}.tier-gold{background:#ffd500;color:#171717}.tier-silver{background:#c2c2c2;color:#171717}.tier-bronze{background:#d2822d;color:#fff}.tier-isic{background:#3cba9c;color:#fff}.tier-regular{background:#f0f0f0;color:#606060}
-      .promo-label{display:block;margin-top:5px;font-size:12px;font-weight:400;color:#979797;line-height:1.4}.credit{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:0 8px 2px;font-size:12px;color:#979797}.footer-buttons{display:flex;gap:6px;flex-shrink:0}
-      .gear{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;color:#979797;font-size:20px;cursor:pointer}.gear:hover,.gear[aria-expanded="true"]{background:#f5f5f5;color:#000}.gear:focus-visible,input:focus-visible{outline:2px solid #545fef;outline-offset:2px}.settings{display:grid;gap:16px;padding:12px 8px;margin-top:8px;border-top:1px solid #e8e8e8}.settings label{display:flex;gap:7px;align-items:center;cursor:pointer}.settings input{accent-color:#545fef;width:16px;height:16px;margin:0}.settings-only{border:0;padding:0}.settings-only .credit{margin-top:0;justify-content:flex-end}
-      @media(max-width:420px){section{padding:6px}th,td{padding:10px 6px}.tier-badge{padding:5px 7px;font-size:12px}.discount-value{padding:4px 6px;font-size:13px}.promo-label{font-size:11px;overflow-wrap:anywhere}}
-      .settings fieldset{width:100%;min-width:0;margin:0;padding:0;border:0}.settings legend{padding:0;margin-bottom:8px;color:#606060;font-size:12px;font-weight:600}.settings-options{display:grid;width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px}.settings label{min-height:30px}.settings-actions{padding-top:12px!important;border-top:1px solid #e8e8e8!important}@media(max-width:420px){.settings-options{column-gap:8px}.settings label{gap:5px;font-size:12px}.settings input{flex-shrink:0}}
-      .settings-info{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding-top:12px;border-top:1px solid #e8e8e8;color:#979797;font-size:12px}.settings-info a{color:inherit;text-decoration:underline;text-underline-offset:2px}.settings-info a:hover{color:inherit}.settings-info a:focus-visible{outline:2px solid #545fef;outline-offset:2px}
-      [hidden]{display:none!important}
-      .price-notice{flex:1;color:#606060;font-size:13px}.equal-prices .credit{margin-top:0;padding:0 4px;justify-content:flex-start}.equal-prices .gear{flex-shrink:0}
+      :host{--row-h:28px;text-align:left;display:block;clear:both;font:13px "IBM Plex Sans Var",system-ui,sans-serif;color:#000;line-height:1.4;font-kerning:normal;font-variant-numeric:lining-nums;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision}
+      :host([hidden]),[hidden]{display:none!important}
+      *{box-sizing:border-box;font-family:inherit}
+      .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+      section{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:8px}
+
+      /* Table */
+      table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0}
+      th:first-child{width:38%}th:nth-child(2){width:36%}th:last-child{width:26%}
+      th,td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid #e8e8e8}
+      th{font-size:14px;font-weight:500;color:#6b6b6b}
       thead th{padding-top:4px}
-      tfoot td{border-bottom:0;border-top:1px solid #e8e8e8;padding-top:6px;padding-bottom:0;color:#979797;font-size:12px}tfoot td:nth-child(2){color:#979797;font-size:14px;font-weight:400}
-      section:has(table:not([hidden]) tfoot tr:not([hidden])) .credit{margin-top:6px}
+      td:nth-child(2){font-size:16px;font-weight:700;color:#ca0505;overflow-wrap:anywhere}
+      tbody tr:last-child td{border-bottom:0}
+      tbody td:nth-child(2){line-height:var(--row-h)}
+      tfoot td{vertical-align:baseline;border-bottom:0;border-top:1px solid #e8e8e8;padding-top:14px;padding-bottom:8px;color:#6b6b6b;font-size:14px}
+      tfoot td:nth-child(2){color:#6b6b6b;font-size:16px;font-weight:700}
+      .discount{white-space:nowrap}
+      .discount-value{display:inline-flex;align-items:center;justify-content:center;height:var(--row-h);min-width:5em;font-variant-numeric:tabular-nums;padding:0 8px;border-radius:4px;background:#5dbd2f;color:#fff;font-size:15px;font-weight:700}
+      .th-note{display:block;margin-top:2px;font-size:12px;font-weight:400}
+      .shared-promo .promo-label{display:none}
+      .promo-label{display:block;margin-top:5px;font-size:12px;font-weight:400;color:#6b6b6b;line-height:1.4}
+
+      /* Tier badges */
+      .tier-badge{display:inline-flex;align-items:center;height:var(--row-h);padding:0 10px;border-radius:4px;font-size:14px;font-weight:600;line-height:1.2;text-transform:uppercase;background:#c2c2c2;color:#171717}
+      .tier-gold{background:#ffd500;color:#171717}
+      .tier-silver{background:#c2c2c2;color:#171717}
+      .tier-bronze{background:#d2822d;color:#fff}
+      .tier-isic{background:#3cba9c;color:#fff}
+      .tier-regular{background:#f0f0f0;color:#606060}
+
+      /* Footer and buttons */
+      .credit{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding:0 8px 2px;font-size:12px;color:#6b6b6b}
+      section:has(table:not([hidden]) tfoot tr:not([hidden])) .credit{margin-top:2px}
+      .footer-buttons{display:flex;gap:6px;flex-shrink:0}
+      .gear{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;color:#6b6b6b;font-size:20px;cursor:pointer}
+      .gear:hover,.gear[aria-expanded="true"]{background:#f5f5f5;color:#000}
+      .gear.done{background:#e9f7e1;border-color:#5dbd2f;color:#2f7a12}
+      .gear.failed{border-color:#ca0505;color:#ca0505}
+      .gear:focus-visible,input:focus-visible,.settings-info a:focus-visible{outline:2px solid #545fef;outline-offset:2px}
+      .price-notice{flex:1;color:#606060;font-size:13px}
+      .equal-prices .credit{margin-top:0;padding:0 4px;justify-content:flex-start}
+      .equal-prices .gear{flex-shrink:0}
+
+      /* Settings */
+      .settings{display:grid;gap:16px;padding:0 8px 12px;margin-top:8px}
+      .settings label{display:flex;gap:7px;align-items:center;min-height:30px;cursor:pointer}
+      .settings input{accent-color:#545fef;width:16px;height:16px;margin:0}
+      .settings fieldset{width:100%;min-width:0;margin:0;padding:0;border:0}
+      .settings legend{padding:0;margin-bottom:8px;color:#606060;font-size:12px;font-weight:600}
+      .settings-options{display:grid;width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px}
+      .view-options{grid-template-columns:minmax(0,1fr)}
+      .option-row{display:flex;align-items:center;gap:8px}
+      .help{flex-shrink:0;width:22px;height:22px;padding:0;border:1px solid #e8e8e8;border-radius:50%;background:#fff;color:#6b6b6b;font-size:12px;font-weight:600;line-height:1;cursor:pointer}
+      .help:hover,.help[aria-expanded="true"]{background:#f5f5f5;color:#000}
+      .help:focus-visible{outline:2px solid #545fef;outline-offset:2px}
+      .hint{margin:2px 0 8px 23px;color:#606060;font-size:12px;line-height:1.5;text-align:left;text-wrap:pretty}
+      .settings-actions{padding-top:12px!important;border-top:1px solid #e8e8e8!important}
+      .settings-info{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding-top:12px;border-top:1px solid #e8e8e8;color:#6b6b6b;font-size:12px}
+      .settings-info a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+      .settings-only{border:0;padding:0}
+      .settings-only .credit{margin-top:0;justify-content:flex-end}
+
+      @media(max-width:420px){
+        section{padding:6px}
+        th,td{padding:10px 6px}
+        th{font-size:13px}
+        .gear{width:40px;height:40px}
+        :host{--row-h:26px}
+        .tier-badge{padding:0 7px;font-size:12px}
+        .discount-value{padding:0 6px;font-size:13px}
+        .promo-label{font-size:11px;overflow-wrap:anywhere}
+        .settings-options{column-gap:8px}
+        .settings label{gap:5px;font-size:12px}
+        .settings input{flex-shrink:0}
+      }
     `, shadow);
     const section = node('section', null, shadow);
     section.id = 'price-table';
     section.setAttribute('aria-label', 'Ceny ceníků: ' + TIERS.map(tier => tier.name).join(', '));
+    // One shared live region announces the result instead of every price cell.
+    const status = node('div', null, section);
+    status.className = 'sr-only';
+    status.setAttribute('role', 'status');
     const table = node('table', null, section);
     const heading = node('tr', null, node('thead', null, table));
     node('th', 'Ceník', heading).scope = 'col';
-    node('th', 'Cena', heading).scope = 'col';
+    const priceHeader = node('th', 'Cena', heading);
+    priceHeader.scope = 'col';
+    // Shown instead of the per-row labels when every visible row has the same promo.
+    const priceNote = node('span', null, priceHeader);
+    priceNote.className = 'th-note';
+    priceNote.hidden = true;
     node('th', 'Sleva', heading).scope = 'col';
     const tbody = node('tbody', null, table);
     const rows = TIERS.map(tier => {
@@ -317,7 +437,6 @@
       const badge = node('div', tier.name.toUpperCase(), label);
       badge.className = 'tier-badge tier-' + (tier.badge || tier.name.toLowerCase());
       const price = node('td', '—', tr);
-      price.setAttribute('aria-live', 'polite');
       const discount = node('td', '—', tr);
       discount.className = 'discount';
       return { tier, price, discount, tr, badge, displayName: tier.name.toUpperCase() };
@@ -354,7 +473,23 @@
     settings.id = 'price-tier-settings';
     settings.hidden = true;
     gear.setAttribute('aria-controls', settings.id);
-    const state = { host, rows, table, section, credit, notice, settings, copy, originalRow, originalPrice, originalAmount: null, cache: new Map(), loaded: false };
+    const state = { host, rows, table, section, status, priceNote, credit, notice, settings, copy, originalRow, originalPrice, originalAmount: null, loaded: false };
+    let copyReset = 0;
+    function setCopyState(label, className) {
+      copy.className = className ? 'gear ' + className : 'gear';
+      copy.title = label;
+      copy.setAttribute('aria-label', label);
+    }
+    function resetCopy() {
+      clearTimeout(copyReset);
+      setCopyState('Kopírovat nabídku');
+    }
+    function showCopyState(label, className) {
+      clearTimeout(copyReset);
+      setCopyState(label, className);
+      copyReset = setTimeout(resetCopy, 2000);
+    }
+    state.resetCopy = resetCopy;
     copy.onclick = async () => {
       try {
         const visible = visibleRows(rows);
@@ -389,11 +524,9 @@
         lines.push('', 'Odkaz ➤ ' + url.href);
         const text = lines.join('\n');
         await writeClipboard(text);
-        copy.title = 'Zkopírováno';
-        copy.setAttribute('aria-label', 'Zkopírováno');
+        showCopyState('Zkopírováno', 'done');
       } catch (error) {
-        copy.title = 'Kopírování selhalo — zkus to znovu';
-        copy.setAttribute('aria-label', copy.title);
+        showCopyState('Kopírování selhalo — zkus to znovu', 'failed');
         console.warn('[Alza Benefit Prices] Kopírování: ' + error.message);
       } finally { copy.focus({ preventScroll: true }); }
     };
@@ -403,6 +536,7 @@
       section.classList.toggle('settings-only', table.hidden && settings.hidden && notice.hidden);
     };
     const tierSettings = node('fieldset', null, settings);
+    tierSettings.className = 'settings-actions';
     node('legend', 'Ceníky', tierSettings);
     const tierOptions = node('div', null, tierSettings);
     tierOptions.className = 'settings-options';
@@ -415,7 +549,7 @@
       checkbox.onchange = () => {
         enabled[tier.name] = checkbox.checked;
         saveSetting('enabled-price-tiers', { ...enabled });
-        void load(id, state);
+        scheduleLoad(id, state);
       };
     }
     const actionSettings = node('fieldset', null, settings);
@@ -432,15 +566,66 @@
       checkbox.onchange = () => {
         update(checkbox.checked);
         saveSetting(key, checkbox.checked);
-        void load(id, state);
+        scheduleLoad(id, state);
       };
     }
     actionCheckbox('AlzaPlus+', alzaPlusPromos, 'alza-plus-promos', value => { alzaPlusPromos = value; });
     actionCheckbox('Cashback', cashbackPromos, 'cashback-price-promos', value => { cashbackPromos = value; });
     actionCheckbox('Výkup', tradeInPromos, 'trade-in-promos', value => { tradeInPromos = value; });
+    const viewSettings = node('fieldset', null, settings);
+    viewSettings.className = 'settings-actions';
+    node('legend', 'Zobrazení', viewSettings);
+    const viewOptions = node('div', null, viewSettings);
+    viewOptions.className = 'settings-options view-options';
+    // A checkbox with a "?" button that unfolds a longer description.
+    function viewOption(text, hint, checked, update) {
+      const option = node('div', null, viewOptions);
+      option.className = 'option';
+      const row = node('div', null, option);
+      row.className = 'option-row';
+      const label = node('label', null, row);
+      const box = node('input', null, label);
+      box.type = 'checkbox';
+      box.checked = checked;
+      box.onchange = () => update(box.checked);
+      node('span', text, label);
+      const help = node('button', '?', row);
+      help.className = 'help';
+      help.type = 'button';
+      help.title = 'Co to dělá';
+      help.setAttribute('aria-label', 'Co dělá volba: ' + text);
+      help.setAttribute('aria-expanded', 'false');
+      const note = node('p', hint, option);
+      note.className = 'hint';
+      note.id = 'hint-' + viewOptions.children.length;
+      note.hidden = true;
+      help.setAttribute('aria-controls', note.id);
+      help.onclick = () => {
+        note.hidden = !note.hidden;
+        help.setAttribute('aria-expanded', String(!note.hidden));
+      };
+      return option;
+    }
+    viewOption('Zobrazit všechny ceníky',
+      'Ukáže všechny Vaše zapnuté ceníky, i když mají stejnou cenu nebo nejsou levnější než běžná cena. Jinak se takové ceníky skryjí.',
+      alwaysShow, value => {
+        alwaysShow = value;
+        saveSetting('always-show-tiers', value);
+        scheduleLoad(id, state);
+      });
+    belowPhotoOption = viewOption('Přesunout ceník doleva',
+      'Přesune ceník z pravého sloupce pod miniatury fotek vlevo.',
+      belowPhoto, value => {
+        belowPhoto = value;
+        saveSetting('panel-below-photo', value);
+        mount(host);
+      });
+    belowPhotoOption.hidden = true;
     const info = node('div', null, settings);
     info.className = 'settings-info';
-    node('span', 'Verze 1.1.1', info);
+    const version = (typeof GM_info !== 'undefined' && GM_info?.script?.version)
+      || (typeof GM !== 'undefined' && GM.info?.script?.version) || '';
+    node('span', version ? 'Verze ' + version : 'Alza Benefit Prices', info);
     const sourceLink = node('a', 'Zdrojový kód', info);
     sourceLink.href = 'https://github.com/dexnis-dev/Alza-Benefit-Prices/';
     sourceLink.target = '_blank';
@@ -449,22 +634,30 @@
     return state;
   }
 
+  // Several quick toggles trigger a single reload.
+  let reloadTimer = 0;
+  function scheduleLoad(id, state) {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => { if (state === panel) void load(id, state); }, 250);
+  }
+
   async function load(id, state) {
     cancel();
     const run = generation;
     state.host.hidden = !state.loaded;
     state.table.hidden = true;
     state.copy.hidden = true;
-    state.copy.title = 'Kopírovat nabídku';
-    state.copy.setAttribute('aria-label', state.copy.title);
+    state.resetCopy();
+    state.status.textContent = '';
+    state.section.setAttribute('aria-busy', 'true');
     state.commonPrice = null;
     state.originalRow.hidden = true;
     state.originalAmount = null;
-    state.rows.forEach(row => { row.tr.hidden = true; row.valid = false; row.result = null; row.amount = null; row.comparisonAmount = null; row.price.className = ''; row.price.textContent = 'Načítání…'; });
+    state.rows.forEach(row => { row.tr.hidden = true; row.valid = false; row.result = null; row.amount = null; row.comparisonAmount = null; row.price.className = ''; row.discount.textContent = '—'; row.price.textContent = 'Načítání…'; });
     async function loadRow(row) {
       try {
         const url = apiUrl(id, row.tier);
-        let cached = state.cache.get(url);
+        let cached = cache.get(url);
         if (!cached || Date.now() - cached.time >= CACHE_TTL) {
           const response = await request(url);
           if (run !== generation) return;
@@ -474,14 +667,17 @@
           if (response.finalUrl && new URL(response.finalUrl).hostname !== 'webapi.alza.cz') throw new Error('API přesměrovalo na jinou doménu.');
           try { cached = { data: JSON.parse(response.responseText), time: Date.now() }; }
           catch { throw new Error('Cena v odpovědi nenalezena.'); }
-          state.cache.set(url, cached);
+          cache.set(url, cached);
+          if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value);
         }
         if (run !== generation) return;
-        const result = extractPrice(cached.data, row.tier.reference);
+        let result = extractPrice(cached.data, row.tier.reference);
         if (!result) throw new Error('Cena v odpovědi nenalezena.');
         // Check equality even when a standard priceGroupType hides the row.
         const comparison = result.hidden ? extractPrice(cached.data, true) : result;
         row.comparisonAmount = comparison?.amount ?? null;
+        // With "always show", a tier without its own price falls back to the standard one.
+        if (result.hidden && alwaysShow && comparison) result = comparison;
         if (result.hidden) {
           row.tr.hidden = true;
           return;
@@ -519,8 +715,9 @@
       const compared = state.rows.filter(row => row.tier.reference || enabled[row.tier.name]);
       const equalPrices = compared.length > 1 && compared.every(row =>
         row.comparisonAmount !== null && row.comparisonAmount === compared[0].comparisonAmount);
-      const hasPrices = !equalPrices && sorted.length > 0;
-      state.commonPrice = equalPrices && basic?.valid ? basic.result : null;
+      const showNotice = equalPrices && !alwaysShow;
+      const hasPrices = !showNotice && sorted.length > 0;
+      state.commonPrice = showNotice && basic?.valid ? basic.result : null;
       const bases = sorted.map(row => row.result.discountBaseAmount).filter(amount => amount !== null);
       const originalAmount = basic?.valid ? basic.result.discountBaseAmount ?? basic.amount
         : bases.length && bases.every(amount => amount === bases[0]) ? bases[0] : null;
@@ -529,13 +726,21 @@
         ? originalAmount : null;
       state.originalRow.hidden = state.originalAmount === null;
       state.originalPrice.textContent = state.originalAmount === null ? ''
-        : formatPrice(state.originalAmount);
+        : formatPanelPrice(state.originalAmount);
+      const labels = sorted.map(row => promoLabel(row.result));
+      const sharedPromo = hasPrices && labels.length > 1 && labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
+      state.priceNote.textContent = sharedPromo;
+      state.priceNote.hidden = !sharedPromo;
+      state.section.classList.toggle('shared-promo', Boolean(sharedPromo));
       state.table.hidden = !hasPrices;
       state.copy.hidden = !hasPrices && !state.commonPrice;
       state.credit.hidden = !hasPrices;
-      state.notice.hidden = !equalPrices;
-      state.section.classList.toggle('equal-prices', equalPrices);
-      state.section.classList.toggle('settings-only', !hasPrices && !equalPrices && state.settings.hidden);
+      state.notice.hidden = !showNotice;
+      state.section.classList.toggle('equal-prices', showNotice);
+      state.section.classList.toggle('settings-only', !hasPrices && !showNotice && state.settings.hidden);
+      state.status.textContent = showNotice ? state.notice.textContent
+        : hasPrices ? 'Ceny načteny: ' + sorted.map(row => row.displayName + ' ' + formatPrice(row.amount)).join(', ') : '';
+      state.section.setAttribute('aria-busy', 'false');
       state.loaded = true;
       state.host.hidden = false;
     }
@@ -546,6 +751,7 @@
     for (const row of rows) {
       row.displayName = row.tier.name.toUpperCase();
       if (row.badge) row.badge.textContent = row.displayName;
+      if (alwaysShow) { row.tr.hidden = !(row.valid && enabled[row.tier.name]); continue; }
       let visible = row.valid && enabled[row.tier.name];
       if (['Gold', 'Silver', 'Bronze', 'ISIC'].includes(row.tier.name)) {
         visible = visible && basic?.valid && row.amount < basic.amount;
@@ -553,12 +759,11 @@
       if (row.tier.reference) visible = visible && row.result?.discountPercent > 0;
       row.tr.hidden = !visible;
     }
+    if (alwaysShow) return;
     const bronze = rows.find(row => row.tier.name === 'Bronze');
     const b2b = rows.find(row => row.tier.name === 'B2B');
     if (b2b && bronze?.valid && !bronze.tr.hidden && bronze.amount === b2b.amount) b2b.tr.hidden = true;
     const isic = rows.find(row => row.tier.name === 'ISIC');
-    if (b2b?.valid && basic?.valid && b2b.amount === basic.amount
-      && isic?.valid && !isic.tr.hidden && isic.amount < basic.amount) b2b.tr.hidden = true;
     const silver = rows.find(row => row.tier.name === 'Silver');
     if (isic?.valid && silver?.valid && !silver.tr.hidden && isic.amount === silver.amount) {
       isic.tr.hidden = true;
@@ -570,6 +775,8 @@
       basic.displayName = 'OSTATNÍ';
       if (basic.badge) basic.badge.textContent = basic.displayName;
       basic.tr.hidden = false;
+      // OSTATNÍ already stands for every tier priced like BASIC.
+      for (const row of compared) if (row.valid && row.amount === basic.amount) row.tr.hidden = true;
     }
     // Keep BASIC only when there is another visible price to compare with it.
     if (basic && !rows.some(row => !row.tier.reference && !row.tr.hidden)) basic.tr.hidden = true;
@@ -579,7 +786,11 @@
     const id = productId(location.pathname, location.search);
     if (id !== activeId) {
       cancel();
+      clearTimeout(reloadTimer);
+      mountObserver.disconnect();
       panel?.host.remove(); panel = null; activeId = id;
+      stripRetries = 0;
+      clearTimeout(stripTimer);
       if (id) {
         panel = createPanel(id);
         void load(id, panel);
@@ -591,6 +802,10 @@
 
   sync();
   // Detect product navigation without modifying Alza's history or scripts.
+  // Navigation events (currententrychange) and the mount observer react at once; the slow timer is a safety net
+  // for browsers without the Navigation API and for a re-rendered container.
+  window.navigation?.addEventListener?.('currententrychange', sync);
+  window.addEventListener('popstate', sync);
   const timer = setInterval(() => { if (!document.hidden) sync(); }, 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
   window.addEventListener('pagehide', event => {
