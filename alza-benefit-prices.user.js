@@ -3,7 +3,7 @@
 // @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    alza-benefit-prices
-// @version      1.3.1
+// @version      1.4.0
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists
@@ -88,7 +88,7 @@
       prices: 'Ceny ',
       price: 'Cena ',
       withWord: 'S ',
-      withCode: 'S kódem ',
+      withCode: 'S kódem {code}',
       promoDefault: 'Akční cena',
       tableLabel: 'Ceny ceníků: ',
       thTier: 'Ceník',
@@ -98,7 +98,8 @@
       settingsTitle: 'Nastavení ceníků',
       copyOffer: 'Kopírovat nabídku',
       equalNotice: 'Všechny ceníky mají stejnou cenu',
-      loadError: 'Ceny se nepodařilo načíst. Zkus obnovit stránku.',
+      loadError: 'Ceny se nepodařilo načíst.',
+      retry: 'Zkusit znovu',
       createdBy: 'Vytvořil ',
       productFallback: 'Produkt Alza',
       originalColon: 'Původní cena: ',
@@ -111,12 +112,12 @@
       groupView: 'Zobrazení',
       helpAbout: 'Co dělá volba: ',
       optAlways: 'Vždy zobrazit ceníky',
-      optAlwaysHint: 'Zobrazí Vaše zapnuté ceníky vždycky, i když není u ceníku sleva nebo jsou všechny ceníky se stejnou cenou.',
+      optAlwaysHint: 'Zobrazí zapnuté ceníky i bez slevy nebo při shodných cenách.',
       optLeft: 'Přesunout ceník doleva',
       optLeftHint: 'Přesune ceník z pravého sloupce pod miniatury fotek vlevo.',
       clear: 'Smazat',
-      clearAffiliate: 'Smazat affiliate',
-      whatIsAffiliate: 'Co je affiliate',
+      clearAffiliate: 'Smazat affiliate ID',
+      whatIsAffiliate: 'Co je affiliate ID?',
       affiliateHint: 'Číslo partnera, které se přidá do kopírovaného odkazu jako ?idp=číslo.',
       version: 'Verze ',
       sourceCode: 'Zdrojový kód',
@@ -130,7 +131,7 @@
       prices: 'Ceny ',
       price: 'Cena ',
       withWord: 'S ',
-      withCode: 'S kódom ',
+      withCode: 'S kódom {code}',
       promoDefault: 'Akčná cena',
       tableLabel: 'Ceny cenníkov: ',
       thTier: 'Cenník',
@@ -140,7 +141,8 @@
       settingsTitle: 'Nastavenie cenníkov',
       copyOffer: 'Kopírovať ponuku',
       equalNotice: 'Všetky cenníky majú rovnakú cenu',
-      loadError: 'Ceny sa nepodarilo načítať. Skús obnoviť stránku.',
+      loadError: 'Ceny sa nepodarilo načítať.',
+      retry: 'Skúsiť znova',
       createdBy: 'Vytvoril ',
       productFallback: 'Produkt Alza',
       originalColon: 'Pôvodná cena: ',
@@ -153,12 +155,12 @@
       groupView: 'Zobrazenie',
       helpAbout: 'Čo robí voľba: ',
       optAlways: 'Vždy zobraziť cenníky',
-      optAlwaysHint: 'Zobrazí Vaše zapnuté cenníky vždy, aj keď pri cenníku nie je zľava alebo majú všetky cenníky rovnakú cenu.',
+      optAlwaysHint: 'Zobrazí zapnuté cenníky aj bez zľavy alebo pri rovnakých cenách.',
       optLeft: 'Presunúť cenník doľava',
       optLeftHint: 'Presunie cenník z pravého stĺpca pod miniatúry fotiek vľavo.',
       clear: 'Zmazať',
-      clearAffiliate: 'Zmazať affiliate',
-      whatIsAffiliate: 'Čo je affiliate',
+      clearAffiliate: 'Zmazať affiliate ID',
+      whatIsAffiliate: 'Čo je affiliate ID?',
       affiliateHint: 'Číslo partnera, ktoré sa pridá do kopírovaného odkazu ako ?idp=číslo.',
       version: 'Verzia ',
       sourceCode: 'Zdrojový kód',
@@ -172,7 +174,7 @@
       prices: 'Prices ',
       price: 'Price ',
       withWord: 'With ',
-      withCode: 'With code ',
+      withCode: 'With code {code}',
       promoDefault: 'Special price',
       tableLabel: 'Prices by price list: ',
       thTier: 'Price list',
@@ -182,7 +184,8 @@
       settingsTitle: 'Price list settings',
       copyOffer: 'Copy offer',
       equalNotice: 'All price lists have the same price',
-      loadError: 'The prices could not be loaded. Try reloading the page.',
+      loadError: 'The prices could not be loaded.',
+      retry: 'Try again',
       createdBy: 'Created by ',
       productFallback: 'Alza product',
       originalColon: 'Original price: ',
@@ -199,8 +202,8 @@
       optLeft: 'Move the price list to the left',
       optLeftHint: 'Moves the price list from the right column to the left, below the product photo thumbnails.',
       clear: 'Clear',
-      clearAffiliate: 'Clear affiliate',
-      whatIsAffiliate: 'What is affiliate',
+      clearAffiliate: 'Clear affiliate ID',
+      whatIsAffiliate: 'What is an affiliate ID?',
       affiliateHint: 'The partner number that is added to the copied link as ?idp=number.',
       version: 'Version ',
       sourceCode: 'Source code',
@@ -214,7 +217,7 @@
       prices: 'Preise ',
       price: 'Preis ',
       withWord: 'Mit ',
-      withCode: 'Mit Code ',
+      withCode: 'Mit Code {code}',
       promoDefault: 'Aktionspreis',
       tableLabel: 'Preise der Preislisten: ',
       thTier: 'Preisliste',
@@ -224,7 +227,8 @@
       settingsTitle: 'Einstellungen der Preislisten',
       copyOffer: 'Angebot kopieren',
       equalNotice: 'Alle Preislisten haben denselben Preis',
-      loadError: 'Die Preise konnten nicht geladen werden. Versuche, die Seite neu zu laden.',
+      loadError: 'Die Preise konnten nicht geladen werden.',
+      retry: 'Erneut versuchen',
       createdBy: 'Erstellt von ',
       productFallback: 'Alza-Produkt',
       originalColon: 'Ursprünglicher Preis: ',
@@ -241,8 +245,8 @@
       optLeft: 'Preisliste nach links verschieben',
       optLeftHint: 'Verschiebt die Preisliste aus der rechten Spalte nach links unter die Miniaturen der Produktfotos.',
       clear: 'Löschen',
-      clearAffiliate: 'Affiliate löschen',
-      whatIsAffiliate: 'Was ist Affiliate',
+      clearAffiliate: 'Affiliate-ID löschen',
+      whatIsAffiliate: 'Was ist eine Affiliate-ID?',
       affiliateHint: 'Die Partnernummer, die dem kopierten Link als ?idp=Nummer hinzugefügt wird.',
       version: 'Version ',
       sourceCode: 'Quellcode',
@@ -256,7 +260,7 @@
       prices: 'Árak ',
       price: 'Ár ',
       withWord: '',
-      withCode: 'kód ',
+      withCode: '{code} kuponkóddal',
       promoDefault: 'Akciós ár',
       tableLabel: 'Az árlisták árai: ',
       thTier: 'Árlista',
@@ -266,9 +270,10 @@
       settingsTitle: 'Az árlisták beállításai',
       copyOffer: 'Ajánlat másolása',
       equalNotice: 'Minden árlistának ugyanaz az ára',
-      loadError: 'Az árakat nem sikerült betölteni. Próbáld újratölteni az oldalt.',
+      loadError: 'Az árakat nem sikerült betölteni.',
+      retry: 'Újrapróbálás',
       createdBy: 'Készítette: ',
-      productFallback: 'Alza termék',
+      productFallback: 'Alza-termék',
       originalColon: 'Eredeti ár: ',
       link: 'Link ➤ ',
       copied: 'Másolva',
@@ -283,8 +288,8 @@
       optLeft: 'Árlista áthelyezése balra',
       optLeftHint: 'Az árlistát a jobb oszlopból balra, a termékfotók bélyegképei alá helyezi át.',
       clear: 'Törlés',
-      clearAffiliate: 'Affiliate törlése',
-      whatIsAffiliate: 'Mi az az affiliate',
+      clearAffiliate: 'Partnerazonosító törlése',
+      whatIsAffiliate: 'Mi az a partnerazonosító?',
       affiliateHint: 'A partnerszám, amely ?idp=szám formában kerül a másolt linkhez.',
       version: 'Verzió ',
       sourceCode: 'Forráskód',
@@ -300,10 +305,8 @@
     settingOn: 'set',
     settingOff: 'cleared',
     saveFailed: 'The setting could not be saved: ',
-    logVersion: 'Version ',
-    logMobile: ' (mobile version)',
-    logCountry: ', country ',
-    logSettings: 'Settings',
+    logVersion: 'Version: ',
+    logSettings: 'Settings:',
     cancelled: 'Loading cancelled.',
     requestError: 'The extension could not load the API. Check access to webapi.alza.cz.',
     timeout: 'Alza did not respond within 20 seconds.',
@@ -317,27 +320,19 @@
     placedPrice: 'below the main price',
     pageChanged: 'The page changed in the meantime.',
     nothingToCopy: 'No price to copy.',
-    copiedLog: 'Offer copied to the clipboard:',
+    copiedLog: 'Copied: ',
     copyFailedLog: 'Copying failed: ',
     staleCache: ': older cache used (',
     tooLarge: 'The API response is too large.',
     blocked: 'HTTP 403: access blocked.',
     apiHttp: 'The API returned HTTP ',
-    redirect: 'The API redirected to another domain.',
+    redirect: 'The API redirected to an unexpected origin.',
     noPrice: 'Price not found in the response.',
-    noOwnPrice: ': no price of its own',
-    standard: ' (standard ',
-    product: 'Product ',
-    logNoTier: ': no price list was loaded, the API is blocked or unavailable.',
-    logEqual: ': all price lists have the same price',
-    logNothing: 'no price list to show',
-    colTier: 'price list',
-    colPrice: 'price',
-    colDiscount: 'discount',
-    colPromo: 'promotion',
-    logOriginal: 'Original price: ',
-    logAlways: ' | mode: always show price lists',
-    logLoading: ': loading price lists.',
+    logNoTier: 'Failed: ',
+    logLoaded: 'Loaded: ',
+    logRendered: 'Rendered: ',
+    logLoading: 'Loading prices for ItemID: ',
+    logRender: 'Render:',
     isicEstimate: 'ISIC: with cashback the API returns the same price as for Basic, price worked out (ISIC price − cashback): ',
   };
   // The language follows the address: "/EN/" in the path means English in every shop, otherwise the language
@@ -353,39 +348,34 @@
   const CACHE_LIMIT = 60;
   // Shared by all panels, so returning to a product reuses its prices.
   const cache = new Map();
+  // Shared response parsing without retaining raw response text in the price cache.
+  const parsedResponses = new WeakMap();
 
-  // Console output in the style of Hlídač shopů: a coloured prefix, then a short sentence.
-  // "log" is the overview, "debug" (Verbose level) the per-request detail, "warn" a problem.
-  const LOG_STYLE = 'background:#545fef;color:#fff;border-radius:3px;padding:1px 6px;font-weight:600';
-  // The message is a separate argument, not part of the format string, so a "%" in it is harmless.
-  const logHead = ['%cAlza Benefit Prices%c', LOG_STYLE, ''];
-  const log = (message, ...details) => console.info(...logHead, message, ...details);
-  const debug = (message, ...details) => console.debug(...logHead, message, ...details);
-  const warn = (message, ...details) => console.warn(...logHead, message, ...details);
+  // Match Hlídač shopů's plain prefix and expandable Render object.
+  // Per-request diagnostics stay at Verbose level; warnings report actual failures.
+  const LOG_PREFIX = 'Alza Benefit Prices – ';
+  const SCRIPT_VERSION = '1.4.0';
+  // Use a fixed format string so a coupon/product containing "%c" cannot style the console.
+  const log = (message, ...details) => console.log('%s', LOG_PREFIX + message, ...details);
+  const debug = (message, ...details) => console.debug('%s', LOG_PREFIX + message, ...details);
+  const warn = (message, ...details) => console.warn('%s', LOG_PREFIX + message, ...details);
 
   function scriptVersion() {
     return (typeof GM_info !== 'undefined' && GM_info?.script?.version)
-      || (typeof GM !== 'undefined' && GM.info?.script?.version) || '';
+      || (typeof GM !== 'undefined' && GM.info?.script?.version) || SCRIPT_VERSION;
   }
 
   // Safari Userscripts exposes asynchronous GM.* storage APIs.
   async function getSetting(key, fallback) {
-    if (typeof GM !== 'undefined' && typeof GM.getValue === 'function') return await GM.getValue(key, fallback);
-    if (typeof GM_getValue === 'function') return await GM_getValue(key, fallback);
+    if (typeof GM !== 'undefined' && typeof GM.getValue === 'function') return GM.getValue(key, fallback);
+    if (typeof GM_getValue === 'function') return GM_getValue(key, fallback);
     throw new Error(LOG.noStorage);
   }
 
   async function setSetting(key, value) {
-    if (typeof GM !== 'undefined' && typeof GM.setValue === 'function') return await GM.setValue(key, value);
-    if (typeof GM_setValue === 'function') return await GM_setValue(key, value);
+    if (typeof GM !== 'undefined' && typeof GM.setValue === 'function') return GM.setValue(key, value);
+    if (typeof GM_setValue === 'function') return GM_setValue(key, value);
     throw new Error(LOG.noStorageWrite);
-  }
-
-  let settingWrites = Promise.resolve();
-  function saveSetting(key, value) {
-    log(LOG.logSetting + key + ' = ' + (key === 'affiliate-idp' ? (value ? LOG.settingOn : LOG.settingOff) : JSON.stringify(value)));
-    settingWrites = settingWrites.then(() => setSetting(key, value))
-      .catch(error => warn(LOG.saveFailed + error.message));
   }
 
   const ALL_TIERS = [
@@ -399,25 +389,42 @@
   // Alza.hu and Alza.at have no ISIC price list, so ISIC is left out there completely (table, settings,
   // copying, requests).
   const TIERS = hasIsic ? ALL_TIERS : ALL_TIERS.filter(tier => tier.name !== 'ISIC');
-  const [saved, savedPlus, savedCashback, savedTradeIn, savedAlways, savedBelowPhoto, savedIdp] = await Promise.all([
-    getSetting('enabled-price-tiers', {}),
-    getSetting('alza-plus-promos', true),
-    getSetting('cashback-price-promos', true),
-    getSetting('trade-in-promos', true),
-    getSetting('always-show-tiers', false),
-    getSetting('panel-below-photo', false),
-    getSetting('affiliate-idp', ''),
-  ]);
-  const enabled = Object.fromEntries(TIERS.map(tier => [tier.name, saved?.[tier.name] !== false]));
-  let alzaPlusPromos = savedPlus !== false;
-  let cashbackPromos = savedCashback !== false;
-  let tradeInPromos = savedTradeIn !== false;
-  let alwaysShow = savedAlways === true;
-  let belowPhoto = savedBelowPhoto === true;
+
+  // Read only the unified settings; absent/invalid storage uses the defaults below.
+  const savedSettings = await getSetting('settings', {});
+  const storedSettings = savedSettings && typeof savedSettings === 'object' && !Array.isArray(savedSettings)
+    ? savedSettings : {};
+  const savedTiers = storedSettings['enabled-price-tiers'] || {};
+  const enabled = Object.fromEntries(TIERS.map(tier => [tier.name, savedTiers[tier.name] !== false]));
+  let alzaPlusPromos = storedSettings['alza-plus-promos'] !== false;
+  let cashbackPromos = storedSettings['cashback-price-promos'] !== false;
+  let tradeInPromos = storedSettings['trade-in-promos'] !== false;
+  let alwaysShow = storedSettings['always-show-tiers'] === true;
+  let belowPhoto = storedSettings['panel-below-photo'] === true;
   let belowPhotoOption = null;
   // Affiliate ID added to the copied link as ?idp=<number>; digits only.
-  let affiliateId = String(savedIdp ?? '').replace(/\D/g, '').slice(0, 12);
-  log(LOG.logVersion + (scriptVersion() || '?') + ' — ' + location.hostname + (mobile ? LOG.logMobile : '') + LOG.logCountry + country);
+  let affiliateId = String(storedSettings['affiliate-idp'] ?? '').replace(/\D/g, '').slice(0, 12);
+
+  let settingWrites = null;
+  let pendingSettings = null;
+  function saveSetting(key, value) {
+    storedSettings[key] = value;
+    log(LOG.logSetting + key + ' = ' + (key === 'affiliate-idp' ? (value ? LOG.settingOn : LOG.settingOff) : JSON.stringify(value)));
+    pendingSettings = { ...storedSettings, 'enabled-price-tiers': { ...storedSettings['enabled-price-tiers'] } };
+    // Coalesce quick changes and serialize writes, including changes made during an async save.
+    if (!settingWrites) settingWrites = Promise.resolve().then(async () => {
+      while (pendingSettings) {
+        const snapshot = pendingSettings;
+        pendingSettings = null;
+        try { await setSetting('settings', snapshot); }
+        catch (error) { warn(LOG.saveFailed + error.message); }
+      }
+      settingWrites = null;
+    });
+  }
+
+  log(LOG.logVersion + scriptVersion());
+  debug('Environment:', { hostname: location.hostname, country, language: activeLanguage, mobile });
   // Keys are the storage keys of the settings, so the overview is the same in every shop.
   debug(LOG.logSettings, {
     'enabled-price-tiers': { ...enabled }, 'alza-plus-promos': alzaPlusPromos, 'cashback-price-promos': cashbackPromos,
@@ -426,7 +433,8 @@
   let activeId = null;
   let generation = 0;
   let panel = null;
-  let pending = [];
+  const pending = new Set();
+  const inFlight = new Map();
 
   function productId(pathname, search = '') {
     const variant = new URLSearchParams(search).get('dq');
@@ -446,22 +454,29 @@
     if (!data || typeof data !== 'object') return computePrice(data, reference, promos);
     let byKey = priceMemo.get(data);
     if (!byKey) priceMemo.set(data, byKey = new Map());
-    const key = [reference, promos.plus, promos.cashback, promos.tradeIn].map(Number).join('');
+    const key = (reference ? 8 : 0) | (promos.plus ? 4 : 0) | (promos.cashback ? 2 : 0) | (promos.tradeIn ? 1 : 0);
     if (!byKey.has(key)) byKey.set(key, computePrice(data, reference, promos));
     return byKey.get(key);
   }
 
-  function computePrice(data, reference, promos) {
-    function findPricing(value, depth = 0) {
-      if (!value || typeof value !== 'object' || depth > 30) return null;
-      if (value.mainPriceTag || Array.isArray(value.promoPrices)) return value;
-      for (const child of Object.values(value)) {
-        const result = findPricing(child, depth + 1);
-        if (result) return result;
-      }
-      return null;
+  const pricingMemo = new WeakMap();
+  function findPricing(value, depth = 0) {
+    if (!value || typeof value !== 'object' || depth > 15) return null;
+    if (value.mainPriceTag || Array.isArray(value.promoPrices)) return value;
+    for (const child of Object.values(value)) {
+      const result = findPricing(child, depth + 1);
+      if (result) return result;
     }
-    const pricing = findPricing(data);
+    return null;
+  }
+  function computePrice(data, reference, promos) {
+    if (!data || typeof data !== 'object') return null;
+    // Discover the pricing object once, even when settings or reference mode change.
+    if (!pricingMemo.has(data)) {
+      pricingMemo.set(data, (data.data && (data.data.mainPriceTag || Array.isArray(data.data.promoPrices)))
+        ? data.data : findPricing(data));
+    }
+    const pricing = pricingMemo.get(data);
     if (!pricing) return null;
     const main = pricing.mainPriceTag;
     // "Novinka" uses priceType 7 while its priceGroupType can remain zero.
@@ -506,24 +521,32 @@
     return selected;
   }
 
-  // Requests of the panel are tracked so a new load can cancel them; "track = false" is for the
-  // copied offer, which must not be cut short by a reload.
+  // Share requests between the panel and copied offers. Once copying uses a request,
+  // navigation may discard its panel result but must not abort the clipboard's data.
   function request(url, track = true) {
-    return new Promise((resolve, reject) => {
+    const existing = inFlight.get(url);
+    if (existing) {
+      if (!track) existing.keepAlive = true;
+      return existing.promise;
+    }
+    const tracked = { keepAlive: !track };
+    let settled = false;
+    const promise = new Promise((resolve, reject) => {
       let handle;
-      let settled = false;
       const finish = callback => value => {
         if (settled) return;
         settled = true;
-        pending = pending.filter(item => item !== tracked);
+        pending.delete(tracked);
+        inFlight.delete(url);
         callback(value);
       };
       const fail = finish(reject);
-      const tracked = { abort() {
+      tracked.abort = () => {
+        if (tracked.keepAlive) return;
         fail(new Error(LOG.cancelled));
         try { handle?.abort?.(); } catch { /* The request may already be finished. */ }
-      } };
-      if (track) pending.push(tracked);
+      };
+      if (track) pending.add(tracked);
       const succeed = finish(response => resolve({
         status: response.status,
         responseText: typeof response.responseText === 'string' ? response.responseText : String(response.response ?? ''),
@@ -549,13 +572,16 @@
         if (typeof handle?.then === 'function') handle.then(succeed, fail);
       } catch (error) { fail(error); }
     });
+    tracked.promise = promise;
+    // Some managers/mocks invoke callbacks synchronously.
+    if (!settled) inFlight.set(url, tracked);
+    return promise;
   }
 
   function cancel() {
     generation++;
-    const requests = pending;
-    pending = [];
-    requests.forEach(handle => handle.abort());
+    for (const handle of pending) handle.abort();
+    pending.clear();
   }
 
   function node(tag, text, parent) {
@@ -594,17 +620,60 @@
     const amount = euro ? Math.round(raw * 100) / 100 : Math.round(raw);
     const base = isic.discountBaseAmount;
     const percent = base > amount ? (base - amount) / base * 100 : null;
-    log(LOG.isicEstimate + formatPrice(amount) + (percent ? ' (' + formatDiscount(percent) + ')' : ''));
+    debug(LOG.isicEstimate + formatPrice(amount) + (percent ? ' (' + formatDiscount(percent) + ')' : ''));
     return { ...isic, amount, price: formatPanelPrice(amount), discountPercent: percent, estimated: true };
   }
 
-  // Tiers that share one row when their prices match: ISIC joins Silver, B2B joins Bronze.
+  // Shared calculations take explicit inputs, never panel visibility settings.
+  // The caller chooses promotions and whether to include a tier's standard-price fallback.
+  function resolveTierPrice(data, tier, promos, includeStandard = false) {
+    const selected = extractPrice(data, tier.reference, promos);
+    if (!selected) return null;
+    const comparison = selected.hidden ? extractPrice(data, true, promos) : selected;
+    if (!comparison) return null;
+    return { result: selected.hidden ? (includeStandard ? comparison : null) : selected, comparison };
+  }
+
+  function correctIsicPrices(items) {
+    const basic = items.find(item => item?.tier.reference);
+    const isic = items.find(item => item?.tier.name === 'ISIC');
+    if (isic?.result && basic?.result) {
+      isic.result = estimateIsicCashback(isic.result, basic.result);
+      isic.comparison = isic.result;
+    }
+  }
+
+  function compareWithBasic(result, basic) {
+    if (!basic) return 'basic-unavailable';
+    return result.amount < basic.amount ? null
+      : result.amount === basic.amount ? 'same-as-basic' : 'higher-than-basic';
+  }
+
+  // Both outputs show an original price only when a displayed price is lower.
+  // The panel may use BASIC's main price; copied offers use discount bases only.
+  function originalPrice(results, basic, useBasicAmount = false) {
+    let base = basic?.discountBaseAmount ?? (useBasicAmount ? basic?.amount : null);
+    if (base == null) {
+      const bases = results.map(result => result.discountBaseAmount).filter(amount => amount != null);
+      base = bases.length && bases.every(amount => amount === bases[0]) ? bases[0] : null;
+    }
+    return base != null && results.some(result => result.amount < base) ? base : null;
+  }
+
+  // Equal amounts can require different coupons or conditions; keep those offers separate.
+  function samePromotion(left, right) {
+    if (Boolean(left.promo) !== Boolean(right.promo)) return false;
+    return !left.promo || (left.priceType === right.priceType
+      && (left.coupon || '') === (right.coupon || '') && (left.name || '') === (right.name || ''));
+  }
+
+  // Tiers share one row only when both the amount and promotion match.
   const TIER_PAIRS = [['ISIC', 'Silver'], ['B2B', 'Bronze']];
   function foldPairs(items, merge) {
     for (const [name, into] of TIER_PAIRS) {
       const source = items.find(item => item.tier.name === name);
       const target = items.find(item => item.tier.name === into);
-      if (source && target && source.amount === target.amount) merge(target, source);
+      if (source && target && source.amount === target.amount && samePromotion(source.result, target.result)) merge(target, source);
     }
   }
 
@@ -612,10 +681,16 @@
   // and exactly one differs from BASIC. Used by the table and by the copied offer; returns that tier.
   function onlyDifferent(basicAmount, others, amountOf) {
     if (basicAmount == null || others.length < 2) return null;
-    const amounts = others.map(amountOf);
-    if (amounts.some(amount => amount == null)) return null;
-    const distinct = others.filter((item, index) => amounts[index] !== basicAmount);
-    return distinct.length === 1 ? distinct[0] : null;
+    let distinct = null;
+    for (const item of others) {
+      const amount = amountOf(item);
+      if (amount == null) return null;
+      if (amount !== basicAmount) {
+        if (distinct) return null;
+        distinct = item;
+      }
+    }
+    return distinct;
   }
 
   function visibleRows(rows) {
@@ -625,11 +700,16 @@
   // The write has to start inside the click: Safari refuses it once the click is "used up" by waiting.
   // ClipboardItem takes the text as a promise, so the write starts at once and gets the text later.
   async function writeClipboard(textPromise) {
+    // Observe failures even if clipboard access fails before it can consume the promised text.
+    // Awaiting the original promise below still propagates its error to the copy button.
+    textPromise.catch(() => {});
     const clipboard = navigator.clipboard;
     if (!clipboard) throw new Error(LOG.noClipboard);
     if (typeof ClipboardItem === 'function' && typeof clipboard.write === 'function') {
+      const blobPromise = textPromise.then(text => new Blob([text], { type: 'text/plain' }));
+      blobPromise.catch(() => {});
       try {
-        await clipboard.write([new ClipboardItem({ 'text/plain': textPromise.then(text => new Blob([text], { type: 'text/plain' })) })]);
+        await clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
         return;
       } catch { /* Older ClipboardItem without promises: fall back to writeText below. */ }
     }
@@ -644,6 +724,11 @@
     return label.replace(/^Cena s /, single ? T.priceWith : T.pricesWith).replace(/^Cena /, single ? T.price : T.prices);
   }
 
+  // One expandable array containing the exact clipboard text, including blank lines.
+  function logCopiedOffer(id, text) {
+    log(LOG.copiedLog + id, text.split('\n'));
+  }
+
   // The same promotion for the console, which is always English (no translated wording).
   function promoLogLabel(result) {
     if (!result.promo) return '';
@@ -653,7 +738,7 @@
   function promoLabel(result) {
     if (!result.promo) return '';
     return result.priceType === 4 ? T.withWord + 'AlzaPlus+' : result.coupon
-      ? T.withCode + result.coupon : result.name || T.promoDefault;
+      ? T.withCode.replace('{code}', () => result.coupon) : result.name || T.promoDefault;
   }
 
   function svgIcon(path, withCenter = false) {
@@ -692,7 +777,7 @@
   function mount(host) {
     place(host);
     clearTimeout(stripTimer);
-    if (belowPhoto && !mobile && !photoStrip() && stripRetries++ < 12) {
+    if (belowPhoto && !mobile && !stripAvailable && stripRetries++ < 12) {
       stripTimer = setTimeout(() => { if (panel) mount(panel.host); }, 250);
     }
     if (host.parentNode !== observedParent) {
@@ -711,17 +796,18 @@
 
   // Remembered so that the console says where the panel went only when that changes.
   let lastPlacement = '';
+  let stripAvailable = false;
   function placed(where) {
     if (where === lastPlacement) return;
     lastPlacement = where;
-    log(LOG.placed + where + '.');
+    debug(LOG.placed + where + '.');
   }
 
   function place(host) {
     // Hlídačshopů's content lives in a closed shadow root; use its outer host.
-    const tracker = document.querySelector('[data-hs], #hlidacShopu');
     // Desktop only: offered whenever the photo strip is on the page.
     const strip = mobile ? null : photoStrip();
+    stripAvailable = Boolean(strip);
     if (belowPhotoOption) belowPhotoOption.hidden = !strip;
     if (strip && belowPhoto) {
       host.style.margin = '12px 0';
@@ -735,6 +821,7 @@
       return;
     }
     host.style.margin = mobile ? '0' : '0 0 12px';
+    const tracker = document.querySelector('[data-hs], #hlidacShopu');
     const before = tracker || document.querySelector('[data-react-client-component="alternativePricingModule"]');
     if (before) {
       host.style.order = before.style.order || '';
@@ -783,10 +870,12 @@
   .tier-regular{background:#f0f0f0;color:#606060}
 
   /* Footer and buttons */
-  .credit{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding:0 8px 2px;font-size:12px;color:#6b6b6b}
+  .credit{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding:0 8px 2px;font-size:12px;color:#6b6b6b}
   section:has(table:not([hidden]) tfoot tr:not([hidden])) .credit{margin-top:2px}
   .footer-buttons{display:flex;gap:6px;flex-shrink:0}
   .gear{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid #e8e8e8;border-radius:8px;background:#fff;color:#6b6b6b;cursor:pointer}
+  .gear.retry{width:auto;padding:0 8px;font:inherit;white-space:nowrap}
+  .gear:disabled{opacity:.5;cursor:wait}
   .gear:hover,.gear[aria-expanded="true"]{background:#f5f5f5;color:#000}
   .gear.done{background:#e9f7e1;border-color:#5dbd2f;color:#2f7a12}
   .gear.failed{border-color:#ca0505;color:#ca0505}
@@ -837,6 +926,10 @@
   `;
 
   function createPanel(id) {
+    const panelLanguage = activeLanguage;
+    // History changes may precede sync() in browsers without the Navigation API.
+    const isCurrent = () => state === panel && productId(location.pathname, location.search) === id
+      && pageLanguage() === panelLanguage;
     const host = node('div');
     host.id = 'local-alza-price-tiers';
     host.hidden = true;
@@ -899,6 +992,11 @@
     copy.setAttribute('aria-label', T.copyOffer);
     copy.hidden = true;
     copy.append(svgIcon('M8 8H20V21H8Z M16 8V3H3V16H8'));
+    const retry = node('button', T.retry, buttons);
+    retry.className = 'gear retry';
+    retry.type = 'button';
+    retry.hidden = true;
+    retry.onclick = () => { if (isCurrent()) void load(id, state, { retry: true }); };
     const notice = node('span', T.equalNotice, footer);
     notice.className = 'price-notice';
     notice.hidden = true;
@@ -906,11 +1004,6 @@
     const loadError = node('span', T.loadError, footer);
     loadError.className = 'price-notice load-error';
     loadError.hidden = true;
-    const credit = node('span', T.createdBy, footer);
-    const creditLink = node('a', 'Dexnis', credit);
-    creditLink.href = 'https://github.com/dexnis-dev';
-    creditLink.target = '_blank';
-    creditLink.rel = 'noopener noreferrer';
     const settings = node('div', null, section);
     // Help for the "?" buttons: a bubble on hover or focus with a mouse; on touch it stays until
     // you tap elsewhere.
@@ -919,13 +1012,12 @@
     tip.id = 'help-tip';
     tip.hidden = true;
     tip.setAttribute('role', 'tooltip');
-    const touchOnly = () => mobile || matchMedia('(hover: none)').matches;
-    let tipText = '';
+    const hoverQuery = mobile ? null : matchMedia('(hover: none)');
+    const touchOnly = () => mobile || hoverQuery.matches;
     let tipButton = null;
     // The open bubble describes its button, so a screen reader reads it with the button.
     function hideTip() {
       tip.hidden = true;
-      tipText = '';
       tipButton?.removeAttribute('aria-describedby');
       tipButton = null;
     }
@@ -933,7 +1025,6 @@
       tipButton?.removeAttribute('aria-describedby');
       tipButton = button;
       button.setAttribute('aria-describedby', tip.id);
-      tipText = text;
       tip.textContent = text;
       tip.hidden = false;
       const box = section.getBoundingClientRect();
@@ -951,13 +1042,14 @@
       button.addEventListener('focus', () => { if (!touchOnly()) showTip(button, text); });
       button.addEventListener('blur', () => { if (!touchOnly()) hideTip(); });
       button.addEventListener('click', () => {
-        if (touchOnly() && !tip.hidden && tipText === text) hideTip();
+        if (touchOnly() && !tip.hidden && tipButton === button) hideTip();
         else showTip(button, text);
       });
     }
     // A tap or click anywhere else, or the Escape key, closes the bubble.
     const outside = new AbortController();
     document.addEventListener('pointerdown', event => {
+      if (tip.hidden) return;
       if (!event.composedPath().some(element => element.classList?.contains('help'))) hideTip();
     }, { signal: outside.signal, capture: true });
     document.addEventListener('keydown', event => {
@@ -967,7 +1059,7 @@
     settings.id = 'price-tier-settings';
     settings.hidden = true;
     gear.setAttribute('aria-controls', settings.id);
-    const state = { dispose: () => outside.abort(), host, rows, table, section, status, priceNote, credit, notice, loadError, settings, copy, originalRow, originalPrice, loaded: false };
+    const state = { dispose: () => { outside.abort(); clearTimeout(copyReset); }, host, rows, table, section, status, priceNote, notice, loadError, settings, copy, retry, originalRow, originalPrice, loaded: false, loading: false };
     let copyReset = 0;
     function setCopyState(label, className) {
       copy.className = className ? 'gear ' + className : 'gear';
@@ -985,16 +1077,20 @@
     }
     state.resetCopy = resetCopy;
     // The copied offer ignores which tiers, promos and view are switched on in the panel. It uses the
-    // prices already loaded for the panel (even if older than the cache time) so no network is awaited.
+    // prices already loaded for the panel (even if older than the cache time); missing tiers are fetched.
     async function offerText() {
-      const offer = await buildOffer(id, true);
-      if (id !== activeId) throw new Error(LOG.pageChanged);
-      if (!offer) throw new Error(LOG.nothingToCopy);
+      if (!isCurrent()) throw new Error(LOG.pageChanged);
+      const url = new URL(location.href);
       const title = document.querySelector('h1')?.textContent.trim() || T.productFallback;
+      const offer = await buildOffer(id, true);
+      if (!isCurrent()) throw new Error(LOG.pageChanged);
+      if (!offer) throw new Error(LOG.nothingToCopy);
       const lines = ['## ' + title, ''];
       const original = offer.original !== null ? T.originalColon + '~~' + formatPrice(offer.original) + '~~' : '';
-      const priceText = entry => formatPrice(entry.amount)
-        + (formatDiscount(entry.result.discountPercent) ? ' (' + formatDiscount(entry.result.discountPercent) + ')' : '');
+      const priceText = entry => {
+        const discount = formatDiscount(entry.result.discountPercent);
+        return formatPrice(entry.amount) + (discount ? ' (' + discount + ')' : '');
+      };
       if (offer.single) {
         // Every tier costs the same and there is no discount: just the price.
         lines.push('- ' + formatPrice(offer.entries[0].amount));
@@ -1029,7 +1125,6 @@
         });
         lines.push(blocks.join('\n'));
       }
-      const url = new URL(location.href);
       // Always the desktop address (www.alza.cz), also when copied from m.alza.cz or the bare domain.
       url.hostname = url.hostname.replace(/^(?:m\.|www\.)?(alza\.(?:cz|sk|hu|de|at))$/i, 'www.$1');
       // The /EN/ language prefix is not part of the copied link.
@@ -1046,17 +1141,19 @@
       try {
         const text = offerText();
         await writeClipboard(text);
+        if (!isCurrent()) return;
         showCopyState(T.copied, 'done');
-        log(LOG.copiedLog, '\n' + await text);
+        logCopiedOffer(id, await text);
       } catch (error) {
+        if (!isCurrent()) return;
         showCopyState(T.copyFailedTitle, 'failed');
         warn(LOG.copyFailedLog + error.message);
-      } finally { copy.focus({ preventScroll: true }); }
+      } finally { if (isCurrent()) copy.focus({ preventScroll: true }); }
     };
     gear.onclick = () => {
       settings.hidden = !settings.hidden;
       gear.setAttribute('aria-expanded', String(!settings.hidden));
-      section.classList.toggle('settings-only', table.hidden && settings.hidden && notice.hidden && loadError.hidden);
+      section.classList.toggle('settings-only', table.hidden && settings.hidden && notice.hidden && loadError.hidden && retry.hidden);
     };
     // A labelled checkbox; "change" saves a setting and schedules a reload of the prices.
     function addCheckbox(parent, text, checked, onChange) {
@@ -1070,7 +1167,8 @@
     }
     function change(key, value) {
       saveSetting(key, value);
-      scheduleLoad(id, state);
+      if (key === 'enabled-price-tiers') scheduleLoad(id, state);
+      else if (state.loaded) render(id, state);
     }
     function addGroup(title, optionsClass) {
       const group = node('fieldset', null, settings);
@@ -1084,7 +1182,7 @@
     for (const tier of TIERS) {
       addCheckbox(tierOptions, tier.name, enabled[tier.name], value => {
         enabled[tier.name] = value;
-        change('enabled-price-tiers', { ...saved, ...enabled });
+        change('enabled-price-tiers', { ...savedTiers, ...enabled });
       });
     }
     const actionOptions = addGroup(T.groupPromos, 'settings-options');
@@ -1158,8 +1256,15 @@
     const info = node('div', null, settings);
     info.className = 'settings-info';
     const version = scriptVersion();
-    node('span', version ? T.version + version : 'Alza Benefit Prices', info);
-    const sourceLink = node('a', T.sourceCode, info);
+    node('span', T.version + version, info);
+    const links = node('span', null, info);
+    links.append(T.createdBy);
+    const creditLink = node('a', 'Dexnis', links);
+    creditLink.href = 'https://github.com/dexnis-dev';
+    creditLink.target = '_blank';
+    creditLink.rel = 'noopener noreferrer';
+    links.append(' · ');
+    const sourceLink = node('a', T.sourceCode, links);
     sourceLink.href = 'https://github.com/dexnis-dev/Alza-Benefit-Prices/';
     sourceLink.target = '_blank';
     sourceLink.rel = 'noopener noreferrer';
@@ -1168,29 +1273,38 @@
   }
 
   // Raw API data of one tier, from the shared cache or the network. null means the run was superseded.
-  // "allowStale" accepts an expired cache entry, so copying never waits for the network.
-  async function tierData(id, tier, run, allowStale = false) {
+  // "allowStale" accepts expired entries; only missing tiers need the network when copying.
+  async function tierData(id, tier, run, allowStale = false, diagnostics = null) {
     const url = apiUrl(id, tier);
     const cached = cache.get(url);
-    if (cached && (allowStale || Date.now() - cached.time < CACHE_TTL)) {
-      // Only the interesting case is logged: an expired entry that the copied offer still uses.
-      if (Date.now() - cached.time >= CACHE_TTL) debug(tier.name + LOG.staleCache + Math.round((Date.now() - cached.time) / 1000) + ' s)');
+    const age = cached ? Date.now() - cached.time : Infinity;
+    if (cached && (allowStale || age < CACHE_TTL)) {
+      if (diagnostics) diagnostics.source = 'cache';
+      // Evict the least recently used product, rather than the oldest inserted one.
+      cache.delete(url);
+      cache.set(url, cached);
+      if (age >= CACHE_TTL) debug(tier.name + LOG.staleCache + Math.round(age / 1000) + ' s)');
       return cached.data;
     }
+    if (diagnostics) diagnostics.source = inFlight.has(url) ? 'shared' : 'network';
     debug(tier.name + ': GET ' + url);
     const response = await request(url, run !== null);
+    // Cache shared responses once; a superseded panel can still supply the copied offer.
+    if (parsedResponses.has(response)) return run !== null && run !== generation ? null : parsedResponses.get(response);
     debug(tier.name + ': HTTP ' + response.status + ', ' + response.responseText.length + ' B');
-    if (run !== null && run !== generation) return null;
     if (response.responseText.length > 2 * 1024 * 1024) throw new Error(LOG.tooLarge);
     if (response.status === 403) throw new Error(LOG.blocked);
     if (response.status < 200 || response.status >= 300) throw new Error(LOG.apiHttp + response.status + '.');
-    if (response.finalUrl && new URL(response.finalUrl).hostname !== 'webapi.alza.cz') throw new Error(LOG.redirect);
+    if (response.finalUrl && new URL(response.finalUrl).origin !== 'https://webapi.alza.cz') throw new Error(LOG.redirect);
     let data;
     try { data = JSON.parse(response.responseText); }
     catch { throw new Error(LOG.noPrice); }
+    if (!data || typeof data !== 'object') throw new Error(LOG.noPrice);
+    cache.delete(url);
+    parsedResponses.set(response, data);
     cache.set(url, { data, time: Date.now() });
     if (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value);
-    return data;
+    return run !== null && run !== generation ? null : data;
   }
 
   // The offer to copy: every tier with a discount, whatever tiers, promos or view the user has switched on.
@@ -1199,25 +1313,18 @@
     const found = await Promise.all(TIERS.map(async tier => {
       try {
         const data = await tierData(id, tier, null, allowStale);
-        const result = extractPrice(data, tier.reference, all);
-        if (!result) return null;
-        // A tier without its own price still has the standard one, which tells whether it equals BASIC.
-        if (result.hidden) return { tier, result: null, comparison: extractPrice(data, true, all) };
-        return { tier, result, comparison: result };
+        const resolved = resolveTierPrice(data, tier, all);
+        return resolved ? { tier, ...resolved } : null;
       } catch (error) {
         debug(tier.name + ': ' + error.message);
         return null;
       }
     }));
     const basic = found.find(item => item?.tier.reference);
-    const isicItem = found.find(item => item?.tier.name === 'ISIC');
-    if (isicItem?.result && basic?.result) {
-      const corrected = estimateIsicCashback(isicItem.result, basic.result);
-      if (corrected !== isicItem.result) { isicItem.result = corrected; isicItem.comparison = corrected; }
-    }
+    correctIsicPrices(found);
     const discounted = item => item?.result?.discountPercent > 0;
     const tiers = found.filter(item => item && !item.tier.reference && discounted(item)
-      && (!basic || item.result.amount < basic.result.amount));
+      && (!basic?.result || compareWithBasic(item.result, basic.result) === null));
     const toEntry = (item, result = item.result) => (
       { tier: item.tier, names: [item.tier.name.toUpperCase()], amount: result.amount, result });
     // Same pairs as in the table; the folded entry is dropped from the list.
@@ -1230,7 +1337,7 @@
     // stands for all the others.
     const others = TIERS.filter(tier => !tier.reference)
       .map(tier => found.find(item => item?.tier === tier) || { tier, comparison: null });
-    const lone = basic ? onlyDifferent(basic.result.amount, others, item => item.comparison?.amount ?? null) : null;
+    const lone = basic?.result ? onlyDifferent(basic.result.amount, others, item => item.comparison?.amount ?? null) : null;
     const stands = Boolean(lone) && tiers.includes(lone);
     // BASIC (or OSTATNÍ) is listed only with a discount of its own, as in the table.
     if (entries.length && discounted(basic)) {
@@ -1244,150 +1351,223 @@
       if (!priced.length) return null;
       const plain = fold(priced.map(item => toEntry(item, { ...item.result, discountPercent: null })));
       const single = priced.every(item => item.result.amount === priced[0].result.amount);
-      return { entries: single ? [{ names: ['Cena'], amount: priced[0].result.amount, result: { ...priced[0].result, discountPercent: null } }] : plain,
-        original: null, plain: true, single };
+      return { entries: single ? [{ names: [T.thPrice], amount: priced[0].result.amount, result: { ...priced[0].result, discountPercent: null } }] : plain,
+        original: null, single };
     }
-    const bases = entries.map(entry => entry.result.discountBaseAmount).filter(amount => amount !== null);
-    const original = basic?.result.discountBaseAmount ?? (bases.length && bases.every(a => a === bases[0]) ? bases[0] : null);
-    const lowest = Math.min(...entries.map(entry => entry.amount));
-    return { entries, original: original !== null && lowest < original ? original : null };
+    return { entries, original: originalPrice(entries.map(entry => entry.result), basic?.result) };
   }
 
   // Several quick toggles trigger a single reload.
   let reloadTimer = 0;
   function scheduleLoad(id, state) {
     clearTimeout(reloadTimer);
-    reloadTimer = setTimeout(() => { if (state === panel) void load(id, state); }, 250);
+    reloadTimer = setTimeout(() => { if (state === panel) void load(id, state, { missing: true }); }, 250);
   }
 
-  async function load(id, state) {
-    cancel();
-    const run = generation;
-    state.host.hidden = !state.loaded;
-    state.table.hidden = true;
-    state.copy.hidden = true;
-    state.resetCopy();
-    state.status.textContent = '';
+  async function load(id, state, { retry = false, missing = false } = {}) {
+    if (retry && state.loading) return;
+    const targets = state.rows.filter(row => retry ? Boolean(row.error)
+      : missing ? enabled[row.tier.name] && !row.data && !row.error : enabled[row.tier.name]);
+    if (retry && !targets.length) return;
+    if (missing && !targets.length) { if (state.loaded) render(id, state); return; }
+    const started = performance.now();
+    const run = ++generation;
+    state.loading = true;
     state.section.setAttribute('aria-busy', 'true');
-    state.originalRow.hidden = true;
-    state.loadError.hidden = true;
-    let failed = 0;
-    state.rows.forEach(row => { row.tr.hidden = true; row.valid = false; row.result = null; row.amount = null; row.comparisonAmount = null; row.discount.textContent = '—'; row.price.textContent = T.loading; });
-    // Writes a price result into the row (also used again when ISIC is corrected).
-    function renderResult(row, result) {
-      row.price.textContent = result.price;
-      row.discount.textContent = '—';
-      if (result.discountPercent !== null) {
-        row.discount.textContent = '';
-        node('span', formatDiscount(result.discountPercent), row.discount).className = 'discount-value';
+    state.retry.disabled = true;
+    state.retry.textContent = T.loading;
+    state.resetCopy();
+    if (!state.loaded) state.host.hidden = true;
+    if (!retry && !missing) {
+      for (const row of state.rows) {
+        row.data = null;
+        row.error = null;
+        row.source = null;
+        row.requested = false;
       }
-      if (result.promo) {
-        const label = node('span', promoLabel(result), row.price);
-        label.className = 'promo-label';
-      }
-      row.amount = result.amount;
-      row.result = result;
-      row.valid = true;
-      row.tr.hidden = false;
     }
     async function loadRow(row) {
+      row.requested = true;
+      row.error = null;
+      row.data = null;
+      // Invalid payloads may have reached the cache before price extraction failed.
+      if (retry) cache.delete(apiUrl(id, row.tier));
       try {
-        const data = await tierData(id, row.tier, run);
+        const data = await tierData(id, row.tier, run, false, row);
         if (run !== generation || data === null) return;
-        let result = extractPrice(data, row.tier.reference);
-        if (!result) throw new Error(LOG.noPrice);
-        // Check equality even when a standard priceGroupType hides the row.
-        const comparison = result.hidden ? extractPrice(data, true) : result;
-        row.comparisonAmount = comparison?.amount ?? null;
-        // With "always show", a tier without its own price falls back to the standard one.
-        if (result.hidden && alwaysShow && comparison) result = comparison;
-        if (result.hidden) {
-          debug(row.tier.name + LOG.noOwnPrice + (comparison ? LOG.standard + comparison.price + ')' : ''));
-          row.tr.hidden = true;
-          return;
-        }
-        debug(row.tier.name + ': ' + result.price + (result.promo ? ' ' + promoLogLabel(result) : '')
-          + (result.discountPercent ? ' (' + formatDiscount(result.discountPercent) + ')' : ''));
-        renderResult(row, result);
+        row.data = data;
+        row.error = null;
       } catch (error) {
         if (run !== generation) return;
-        failed++;
-        row.tr.hidden = true;
-        warn(row.tier.name + ': ' + error.message);
+        row.data = null;
+        row.error = error.message;
+        warn(row.tier.name + ': ' + error.message, { itemId: id, priceList: row.tier.name });
       }
     }
-    // Fetch independent tiers together, then BASIC only if a price was found.
-    await Promise.all(state.rows.filter(row => !row.tier.reference && enabled[row.tier.name]).map(loadRow));
+    await Promise.all(targets.map(loadRow));
     if (run !== generation) return;
+    // A disabled BASIC is still needed to compare the enabled tiers.
     const basic = state.rows.find(row => row.tier.reference);
-    if (basic && state.rows.some(row => !row.tier.reference && row.comparisonAmount !== null)) await loadRow(basic);
+    if (basic && !basic.data && !basic.error && !targets.includes(basic)
+      && state.rows.some(row => !row.tier.reference && enabled[row.tier.name] && row.data)) await loadRow(basic);
     if (run !== generation) return;
-    const isicRow = state.rows.find(row => row.tier.name === 'ISIC');
-    if (isicRow?.valid && basic?.valid) {
-      const corrected = estimateIsicCashback(isicRow.result, basic.result);
-      if (corrected !== isicRow.result) {
-        renderResult(isicRow, corrected);
-        isicRow.comparisonAmount = corrected.amount;
-      }
+    state.loading = false;
+    render(id, state, { operation: retry ? 'retry' : 'load', durationMs: Math.round(performance.now() - started) });
+  }
+
+  // Write one computed result without changing the retained API data.
+  function renderResult(row, result) {
+    row.price.textContent = result.price;
+    row.discount.textContent = '—';
+    if (result.discountPercent !== null) {
+      row.discount.textContent = '';
+      node('span', formatDiscount(result.discountPercent), row.discount).className = 'discount-value';
     }
-    if (run === generation) {
-      filterRows(state.rows);
-      // Reorder the DOM only so ties keep the configured tier order.
-      const sorted = visibleRows(state.rows);
-      for (const row of sorted) row.tr.parentNode.append(row.tr);
-      const compared = state.rows.filter(row => row.tier.reference || enabled[row.tier.name]);
-      const equalPrices = compared.length > 1 && compared.every(row =>
-        row.comparisonAmount !== null && row.comparisonAmount === compared[0].comparisonAmount);
-      const showNotice = equalPrices && !alwaysShow;
-      const hasPrices = !showNotice && sorted.length > 0;
-      const commonPrice = showNotice && basic?.valid ? basic.result : null;
-      const bases = sorted.map(row => row.result.discountBaseAmount).filter(amount => amount !== null);
-      const originalAmount = basic?.valid ? basic.result.discountBaseAmount ?? basic.amount
-        : bases.length && bases.every(amount => amount === bases[0]) ? bases[0] : null;
-      const shownOriginal = (hasPrices || commonPrice) && originalAmount !== null
-        && (commonPrice ? commonPrice.amount < originalAmount : sorted.some(row => row.amount < originalAmount))
-        ? originalAmount : null;
-      state.originalRow.hidden = shownOriginal === null;
-      state.originalPrice.textContent = shownOriginal === null ? '' : formatPanelPrice(shownOriginal);
-      const labels = sorted.map(row => promoLabel(row.result));
-      const sharedPromo = hasPrices && labels.length > 1 && labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
-      state.priceNote.textContent = sharedPromo;
-      state.priceNote.hidden = !sharedPromo;
-      state.section.classList.toggle('shared-promo', Boolean(sharedPromo));
-      state.table.hidden = !hasPrices;
-      state.credit.hidden = !hasPrices;
-      // Nothing loaded and at least one request failed: tell the user instead of showing an empty panel.
-      const loadFailed = failed > 0 && !state.rows.some(row => row.valid || row.comparisonAmount !== null);
-      state.notice.hidden = !showNotice;
-      state.loadError.hidden = !loadFailed;
-      state.section.classList.toggle('footer-message', showNotice || loadFailed);
-      state.section.classList.toggle('settings-only', !hasPrices && !showNotice && !loadFailed && state.settings.hidden);
-      if (loadFailed) {
-        warn(LOG.product + id + LOG.logNoTier);
-      } else if (showNotice) {
-        log(LOG.product + id + LOG.logEqual + (commonPrice ? ' ' + formatPrice(commonPrice.amount) : '') + '.');
-      } else {
-        console.groupCollapsed(...logHead, LOG.product + id + ': '
-          + (sorted.map(row => row.displayName + ' ' + formatPrice(row.amount)).join(', ') || LOG.logNothing));
-        if (sorted.length) {
-          console.table(sorted.map(row => ({
-            [LOG.colTier]: row.displayName, [LOG.colPrice]: formatPrice(row.amount),
-            [LOG.colDiscount]: formatDiscount(row.result.discountPercent) || '—', [LOG.colPromo]: promoLogLabel(row.result) || '—',
-          })));
-        }
-        console.log(LOG.logOriginal + (shownOriginal === null ? '—' : formatPrice(shownOriginal)) + (alwaysShow ? LOG.logAlways : ''));
-        console.groupEnd();
-      }
-      state.status.textContent = loadFailed ? state.loadError.textContent : showNotice ? state.notice.textContent
-        : hasPrices ? T.pricesLoaded + sorted.map(row => row.displayName + ' ' + formatPrice(row.amount)).join(', ') : '';
-      state.section.setAttribute('aria-busy', 'false');
-      state.loaded = true;
-      state.host.hidden = false;
-      // Show the copy button only when there is something to copy. Nothing loaded means nothing to copy,
-      // so the same blocked requests are not repeated.
-      if (loadFailed) state.copy.hidden = true;
-      else buildOffer(id).then(offer => { if (run === generation) state.copy.hidden = !offer; }, () => {});
+    if (result.promo) {
+      const label = node('span', promoLabel(result), row.price);
+      label.className = 'promo-label';
     }
+    row.amount = result.amount;
+    row.result = result;
+    row.valid = true;
+    row.tr.hidden = false;
+  }
+
+  // View and promotion changes reuse retained responses, even after the shared cache expires.
+  function render(id, state, { operation = 'view', durationMs = 0 } = {}) {
+    const promos = { plus: alzaPlusPromos, cashback: cashbackPromos, tradeIn: tradeInPromos };
+    const prices = [];
+    for (const row of state.rows) {
+      row.tr.hidden = true;
+      row.valid = false;
+      row.result = null;
+      row.amount = null;
+      row.comparisonAmount = null;
+      row.noOwnPrice = false;
+      row.hiddenReason = null;
+      if (row.data == null) {
+        if (row.requested && !state.loading && !row.error) row.error = LOG.noPrice;
+        continue;
+      }
+      if (row.error) continue;
+      const resolved = resolveTierPrice(row.data, row.tier, promos, alwaysShow);
+      if (!resolved) { row.error = LOG.noPrice; continue; }
+      prices.push({ tier: row.tier, row, ...resolved });
+    }
+    correctIsicPrices(prices);
+    for (const { row, result, comparison } of prices) {
+      row.comparisonAmount = comparison?.amount ?? null;
+      if (!result) { row.noOwnPrice = true; continue; }
+      renderResult(row, result);
+    }
+    const basic = state.rows.find(row => row.tier.reference);
+    const failed = state.rows.filter(row => row.error).length;
+    filterRows(state.rows);
+    // Reorder the DOM only so ties keep the configured tier order.
+    const sorted = visibleRows(state.rows);
+    for (const row of sorted) row.tr.parentNode.append(row.tr);
+    const compared = state.rows.filter(row => row.tier.reference || enabled[row.tier.name]);
+    const equalPrices = compared.length > 1 && compared.every(row =>
+      row.comparisonAmount !== null && row.comparisonAmount === compared[0].comparisonAmount);
+    const showNotice = equalPrices && !alwaysShow;
+    const hasPrices = !showNotice && sorted.length > 0;
+    const commonPrice = showNotice && basic?.valid ? basic.result : null;
+    const shownOriginal = originalPrice(commonPrice ? [commonPrice] : hasPrices ? sorted.map(row => row.result) : [],
+      basic?.valid ? basic.result : null, true);
+    state.originalRow.hidden = shownOriginal === null;
+    state.originalPrice.textContent = shownOriginal === null ? '' : formatPanelPrice(shownOriginal);
+    const labels = sorted.map(row => promoLabel(row.result));
+    const sharedPromo = hasPrices && labels.length > 1 && labels[0] && labels.every(label => label === labels[0]) ? labels[0] : '';
+    state.priceNote.textContent = sharedPromo;
+    state.priceNote.hidden = !sharedPromo;
+    state.section.classList.toggle('shared-promo', Boolean(sharedPromo));
+    state.table.hidden = !hasPrices;
+    // Nothing loaded and at least one request failed: tell the user instead of showing an empty panel.
+    const anyValidOrCompared = state.rows.some(row => row.valid || row.comparisonAmount !== null);
+    const loadFailed = failed > 0 && !anyValidOrCompared;
+    state.notice.hidden = !showNotice;
+    state.loadError.hidden = !loadFailed;
+    state.retry.hidden = failed === 0;
+    state.retry.disabled = state.loading;
+    state.retry.textContent = state.loading ? T.loading : T.retry;
+    state.section.classList.toggle('footer-message', showNotice || loadFailed);
+    state.section.classList.toggle('settings-only', !hasPrices && !showNotice && !loadFailed && !failed && state.settings.hidden);
+    const renderStatus = loadFailed ? 'error' : failed ? 'partial' : showNotice ? 'equal-prices' : hasPrices ? 'prices' : 'empty';
+    const attempted = state.rows.filter(row => row.requested);
+    const loaded = attempted.length - failed;
+    const cacheHits = attempted.filter(row => row.source === 'cache').length;
+    const failedTiers = attempted.filter(row => row.error).map(row => row.tier.name);
+    const summary = (loadFailed ? LOG.logNoTier : operation === 'view' ? LOG.logRendered : LOG.logLoaded) + id
+      + ' · ' + loaded + '/' + attempted.length + ' · ' + durationMs + ' ms'
+      + ' · cache ' + cacheHits + '/' + attempted.length
+      + (failedTiers.length ? ' · failed: ' + failedTiers.join('/') : '');
+    if (failed) warn(summary, { failedTiers: [...failedTiers] });
+    else log(summary);
+    log(LOG.logRender);
+    // Log a detached snapshot, so expanding an older entry after navigating or
+    // changing settings still shows the values from that render. No DOM/API objects.
+    console.log({
+      info: {
+        itemId: id,
+        title: document.querySelector('h1')?.textContent.trim() || T.productFallback,
+        country,
+        language: activeLanguage,
+        currency: euro ? 'EUR' : country === 'HU' ? 'HUF' : 'CZK',
+      },
+      metadata: {
+        version: scriptVersion(),
+        hostname: location.hostname,
+        mobile,
+        durationMs,
+        operation,
+        status: renderStatus,
+        loaded,
+        attempted: attempted.length,
+        cacheHits,
+        networkRequests: attempted.filter(row => row.source === 'network').length,
+        sharedRequests: attempted.filter(row => row.source === 'shared').length,
+        failed,
+        failedTiers: [...failedTiers],
+        settings: {
+          priceLists: { ...enabled },
+          promotions: { plus: alzaPlusPromos, cashback: cashbackPromos, tradeIn: tradeInPromos },
+          alwaysShow,
+          belowPhoto,
+          affiliate: Boolean(affiliateId),
+        },
+      },
+      dataset: {
+        originalPrice: shownOriginal,
+        basicPrice: basic?.valid ? basic.amount : null,
+        commonPrice: commonPrice?.amount ?? null,
+        currentPrice: hasPrices ? sorted.map(row => ({
+          priceList: row.displayName,
+          price: row.amount,
+          discountPercent: row.result.discountPercent,
+          promotion: promoLogLabel(row.result) || null,
+        })) : [],
+        priceLists: state.rows.map(row => ({
+          priceList: row.tier.name,
+          enabled: enabled[row.tier.name],
+          visible: hasPrices && !row.tr.hidden,
+          hiddenReason: row.hiddenReason || (showNotice ? 'same-as-basic' : null),
+          source: row.source,
+          price: row.amount,
+          comparisonPrice: row.comparisonAmount,
+          discountPercent: row.result?.discountPercent ?? null,
+          promotion: row.result ? promoLogLabel(row.result) || null : null,
+          estimated: row.result?.estimated === true,
+          error: row.error,
+        })),
+      },
+    });
+    state.status.textContent = loadFailed ? state.loadError.textContent : showNotice ? state.notice.textContent
+      : hasPrices ? T.pricesLoaded + sorted.map(row => row.displayName + ' ' + formatPrice(row.amount)).join(', ') : '';
+    state.section.setAttribute('aria-busy', String(state.loading));
+    state.loaded = true;
+    state.host.hidden = false;
+    // Disabling every panel tier must not disable the independent all-tier offer.
+    state.copy.hidden = !anyValidOrCompared && TIERS.some(tier => enabled[tier.name]);
   }
 
   function filterRows(rows) {
@@ -1397,22 +1577,30 @@
       if (row.badge) row.badge.textContent = row.displayName;
       row.extraBadges?.forEach(badge => badge.remove());
       row.extraBadges = [];
+      row.hiddenReason = !enabled[row.tier.name] ? 'disabled' : row.error ? 'error'
+        : !row.valid ? (row.noOwnPrice ? 'no-own-price' : 'no-price') : null;
       if (alwaysShow) { row.tr.hidden = !(row.valid && enabled[row.tier.name]); continue; }
       let visible = row.valid && enabled[row.tier.name];
-      if (['Gold', 'Silver', 'Bronze', 'ISIC'].includes(row.tier.name)) {
-        visible = visible && basic?.valid && row.amount < basic.amount;
+      if (['Gold', 'Silver', 'Bronze', 'ISIC'].includes(row.tier.name) && visible) {
+        const comparison = compareWithBasic(row.result, basic?.valid ? basic.result : null);
+        row.hiddenReason = comparison;
+        visible = comparison === null;
       }
-      if (row.tier.reference) visible = visible && row.result?.discountPercent > 0;
+      if (row.tier.reference) {
+        if (visible && !(row.result?.discountPercent > 0)) row.hiddenReason = 'no-discount';
+        visible = visible && row.result?.discountPercent > 0;
+      }
       row.tr.hidden = !visible;
     }
     function mergeRow(target, source) {
       source.tr.hidden = true;
-      target.displayName += ' + ' + source.displayName;
+      source.hiddenReason = 'merged-with-' + target.tier.name.toLowerCase();
+      target.displayName += '/' + source.displayName;
       const extra = node('div', source.displayName, target.badge.parentNode);
       extra.className = 'tier-badge tier-' + (source.tier.badge || source.tier.name.toLowerCase());
       target.extraBadges.push(extra);
     }
-    // Only the pairs Silver + ISIC and Bronze + B2B share a row, and only when their prices match.
+    // Only matching prices and promotions of Silver/ISIC and Bronze/B2B share a row.
     foldPairs(rows.filter(row => row.valid && !row.tr.hidden), mergeRow);
     if (alwaysShow) return;
     const compared = rows.filter(row => !row.tier.reference && enabled[row.tier.name]);
@@ -1421,15 +1609,21 @@
       basic.displayName = T.others;
       if (basic.badge) basic.badge.textContent = basic.displayName;
       // Without a discount of its own OSTATNÍ would only repeat the original price shown below the table.
-      basic.tr.hidden = !(basic.result?.discountPercent > 0);
+      basic.tr.hidden = !(enabled[basic.tier.name] && basic.result?.discountPercent > 0);
       // OSTATNÍ already stands for every tier priced like BASIC.
-      for (const row of compared) if (row.valid && row.amount === basic.amount) row.tr.hidden = true;
+      for (const row of compared) if (row.valid && row.amount === basic.amount) {
+        row.tr.hidden = true;
+        row.hiddenReason = 'same-as-basic';
+      }
     }
     // Keep BASIC only when there is another visible price to compare with it.
-    if (basic && !rows.some(row => !row.tier.reference && !row.tr.hidden)) basic.tr.hidden = true;
+    if (basic && !rows.some(row => !row.tier.reference && !row.tr.hidden)) {
+      if (!basic.tr.hidden) basic.hiddenReason = 'no-visible-comparison';
+      basic.tr.hidden = true;
+    }
   }
 
-  function sync() {
+  function sync(remount = true) {
     const id = productId(location.pathname, location.search);
     const language = pageLanguage();
     if (id !== activeId || language !== activeLanguage) {
@@ -1438,6 +1632,8 @@
       cancel();
       clearTimeout(reloadTimer);
       mountObserver.disconnect();
+      cancelAnimationFrame(mountFrame);
+      mountFrame = 0;
       observedParent = null;
       panel?.dispose();
       panel?.host.remove(); panel = null; activeId = id;
@@ -1445,13 +1641,42 @@
       clearTimeout(stripTimer);
       lastPlacement = '';
       if (id) {
-        log(LOG.product + id + LOG.logLoading);
+        debug(LOG.logLoading + id);
         panel = createPanel(id);
         void load(id, panel);
       }
-    } else if (panel) {
+    } else if (panel && (remount || !panel.host.isConnected)) {
       mount(panel.host);
     }
+  }
+
+  // Hidden tabs and BFCache pages have no polling interval at all.
+  function startPageChecks() {
+    let timer = null;
+    let mountChecks = 0;
+    function stop() {
+      if (timer !== null) clearInterval(timer);
+      timer = null;
+    }
+    function start() {
+      if (timer === null && !document.hidden) {
+        timer = setInterval(() => sync(++mountChecks % 5 === 0), 1000);
+      }
+    }
+    function resume() {
+      if (document.hidden) stop();
+      else { sync(); start(); }
+    }
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('pageshow', resume);
+    window.addEventListener('pagehide', stop);
+    start();
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', resume);
+      window.removeEventListener('pageshow', resume);
+      window.removeEventListener('pagehide', stop);
+    };
   }
 
   sync();
@@ -1460,9 +1685,16 @@
   // for browsers without the Navigation API and for a re-rendered container.
   window.navigation?.addEventListener?.('currententrychange', sync);
   window.addEventListener('popstate', sync);
-  const timer = setInterval(() => { if (!document.hidden) sync(); }, 1000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+  const stopPageChecks = startPageChecks();
   window.addEventListener('pagehide', event => {
-    if (!event.persisted) { clearInterval(timer); cancel(); }
+    if (!event.persisted) {
+      stopPageChecks();
+      clearTimeout(reloadTimer);
+      clearTimeout(stripTimer);
+      cancelAnimationFrame(mountFrame);
+      mountObserver.disconnect();
+      panel?.dispose();
+      cancel();
+    }
   });
-})().catch(error => console.error('[Alza Benefit Prices] Startup failed: ' + error.message));
+})().catch(error => console.error('%s', 'Alza Benefit Prices – Startup failed: ' + error.message, error));

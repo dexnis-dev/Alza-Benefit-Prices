@@ -1,56 +1,51 @@
-**🇬🇧 English** · [🇨🇿 Čeština](README.cs.md) · [🇸🇰 Slovenčina](README.sk.md) · [🇭🇺 Magyar](README.hu.md) · [🇩🇪🇦🇹 Deutsch](README.de.md)
-
 # Alza Benefit Prices
 
-Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists, including percentage discounts, right on the product page.
+<img src="./photos/flags/cz.svg" width="24" height="16" alt=""> <strong>Čeština</strong> · <a href="README/README.sk.md"><img src="./photos/flags/sk.svg" width="24" height="16" alt=""> Slovenčina</a> · <a href="README/README.en.md"><img src="./photos/flags/gb.svg" width="24" height="16" alt=""> English</a> · <a href="README/README.hu.md"><img src="./photos/flags/hu.svg" width="24" height="16" alt=""> Magyar</a> · <a href="README/README.de.md"><img src="./photos/flags/de.svg" width="24" height="16" alt=""> Deutsch</a>
 
-> **Note:** Alza.hu and Alza.at do not have the ISIC price list, so it is not shown.
+Zobrazí ceny ceníků **Gold, Silver, ISIC, Bronze, B2B a Basic** přímo u produktu na Alze, včetně slev a akčních nabídek.
 
-## Preview
+Funguje na **Alza.cz, Alza.sk, Alza.hu, Alza.de a Alza.at**, na počítači i mobilu.
 
-<img src="./photos/photo.png" alt="Alza Benefit Prices preview" width="500">
+## 📸 Ukázka
 
-## Installation
+<img src="./photos/preview/photo.png" alt="Ukázka Alza Benefit Prices" width="600">
 
-[Install Alza Benefit Prices](https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js)
+## ⚙️ Instalace
 
-### Chromium and Firefox
+[Nainstalovat Alza Benefit Prices](https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js)
 
-1. Install the **Violentmonkey** userscript manager:
-   - [Chrome, Opera and other Chromium browsers](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag)
-   - [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/violentmonkey/eeagobfjdenkkddmbclomhiblgggliao)
-   - [Firefox](https://addons.mozilla.org/firefox/addon/violentmonkey/)
-2. In Chromium-based browsers open the extension management, find **Violentmonkey**, open its **Details** and turn on **Allow user scripts** if this option is available. For example in Chrome the extension management is at `chrome://extensions`, in Edge at `edge://extensions`. This step is not needed in Firefox.
-3. Open the installation link above and confirm the installation in Violentmonkey.
-4. Open or reload a product page on Alza.
+### Chrome, Edge, Firefox a další prohlížeče
 
-**Allow user scripts** is a browser permission that lets the extension run custom scripts. If your browser requires it and it stays off, the userscript will not work.
+1. Nainstaluj **Violentmonkey**: [Chrome a další Chromium](https://chromewebstore.google.com/detail/violentmonkey/jinjaccalgkegednnccohejagnlnfdag) · [Edge](https://microsoftedge.microsoft.com/addons/detail/violentmonkey/eeagobfjdenkkddmbclomhiblgggliao) · [Firefox](https://addons.mozilla.org/firefox/addon/violentmonkey/).
+2. Pokud to prohlížeč vyžaduje, v nastavení rozšíření Violentmonkey zapni **Povolit uživatelské skripty**.
+3. Klikni na instalační odkaz výše a potvrď instalaci ve Violentmonkey.
+4. Otevři nebo obnov stránku produktu na Alze.
 
 ### Safari
 
-1. Install [Userscripts from the App Store](https://apps.apple.com/app/userscripts/id1463298887).
-2. Turn on Userscripts in the Safari extension settings and allow access to Alza and webapi.alza.cz.
-3. Open the installation link in Safari, click the Userscripts icon and confirm the installation.
-4. Reload the product page on Alza.
+1. Nainstaluj [Userscripts z App Store](https://apps.apple.com/app/userscripts/id1463298887) a zapni ho v nastavení Safari.
+2. Povol přístup k Alze a `webapi.alza.cz`.
+3. Otevři instalační odkaz výše a potvrď přidání přes ikonu Userscripts. Potom obnov stránku produktu.
 
-If the installation is not offered, copy the whole content of the script into the Userscripts editor as a new JavaScript and save it.
+Pokud se instalace nenabídne, vlož obsah skriptu ručně do editoru Userscripts.
 
-## Settings
+## 🔧 Používání
 
-- **Price lists:** turn individual price lists on and off.
-- **Promotions:** separately turn AlzaPlus+, Cashback and Trade-in on and off.
-- **Display:** the **Always show price lists** option shows all enabled price lists even when they have no discount or all have the same price.
-  On desktop there is also **Move the price list to the left**, which moves the panel below the gallery thumbnails (not available on mobile).
-- **Affiliate:** the number is added to the copied link as `?idp=number` (e.g. `?idp=1234`).
+Ceny se zobrazí automaticky. V **nastavení** si můžeš:
 
-Settings are saved automatically. The script picks the lowest price from the enabled promotions. If all loaded price lists have the same price, a short message is shown instead of the table.
+- Vybrat ceníky a akce, které chceš zobrazovat.
+- Zapnout zobrazení i bez slevy.
+- Na počítači přesunout panel pod fotky produktu.
+- Přidat své affiliate číslo do kopírovaného odkazu.
 
-## Copying
+Nastavení se ukládá automaticky.
 
-The button next to the gear copies the offer (name, original price, price lists with a discount and the product link) as text you can paste into a chat or an e-mail. It always copies every price list that has a discount, regardless of what is switched on in the settings. When there is no discount, the plain price (or a list of prices) is copied. Silver with ISIC and Bronze with B2B share one line when their prices match (`SILVER/ISIC`, `BRONZE/B2B`). Price lists with different promotions are split into blocks, each with its own promotion line.
+## 📋 Kopírování nabídky
 
-Mobile versions are supported too (`m.alza.cz`, `m.alza.sk`, `m.alza.hu`, `m.alza.de`, `m.alza.at`).
+Tlačítko pro kopírování zkopíruje název produktu, ceny a odkaz pro sdílení do chatu nebo e-mailu.
 
-When the address contains `/EN/` (for example `alza.at/EN/…`), the panel and the copied text are shown in English, in any shop. Messages in the browser console are always in English.
+**Kopírování používá všechny ceníky a akce, i ty vypnuté v panelu.** Stejné nabídky spojí, různé akce rozdělí. Když není sleva, zkopíruje běžnou cenu.
 
-Created by [Dexnis](https://github.com/dexnis-dev)
+## 📄 Licence
+
+Tento projekt je otevřený pod licencí MIT.
