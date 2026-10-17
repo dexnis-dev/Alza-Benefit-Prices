@@ -27,9 +27,13 @@ async function harness({ hostname = 'www.alza.cz', settings = {}, mode = 'callba
   const docEvents = new Map();
   const windowEvents = new Map();
   const intervals = new Map();
+  const observers = [];
+  const frames = new Map();
+  let frameId = 0;
   let intervalId = 0;
   const doc = {
     hidden: false,
+    documentElement: new Element('html'),
     createElement: tag => new Element(tag),
     createElementNS: (_, tag) => new Element(tag),
     querySelector() { scans++; return null; },
@@ -46,8 +50,14 @@ async function harness({ hostname = 'www.alza.cz', settings = {}, mode = 'callba
     matchMedia: () => ({ matches: false }),
     setInterval(callback) { const id = ++intervalId; intervals.set(id, callback); return id; },
     clearInterval(id) { intervals.delete(id); },
-    MutationObserver: class { observe() {} disconnect() {} },
-    setTimeout, clearTimeout, cancelAnimationFrame() {},
+    MutationObserver: class {
+      constructor(callback) { this.callback = callback; this.observations = []; observers.push(this); }
+      observe(target, options) { this.observations.push({ target, options }); }
+      disconnect() { this.observations = []; }
+    },
+    requestAnimationFrame(callback) { const id = ++frameId; frames.set(id, callback); return id; },
+    cancelAnimationFrame(id) { frames.delete(id); },
+    setTimeout, clearTimeout,
     GM: {
       getValue: async key => { storageReads.push(key); return settings; },
       setValue: async (key, value) => { storageWrites.push({ key, value }); if (save) await save(key, value); },
@@ -81,7 +91,7 @@ async function harness({ hostname = 'www.alza.cz', settings = {}, mode = 'callba
     call.details.onload(response);
     call.resolve?.(response); // Managers may deliver both callbacks and a Promise.
   }
-  return { api: context.api, navigator: context.navigator, location: context.location, calls, reply, logs, clipboardWrites, storageReads, storageWrites, doc, docEvents, windowEvents, intervals, get scans() { return scans; } };
+  return { api: context.api, navigator: context.navigator, location: context.location, calls, reply, logs, clipboardWrites, storageReads, storageWrites, doc, docEvents, windowEvents, intervals, observers, frames, get scans() { return scans; } };
 }
 const price = (amount, group = 1) => ({ data: {
   mainPriceTag: { primaryPrice: String(amount), comparePrice: '1200', priceGroupType: group, priceType: 0 }, promoPrices: [],
@@ -254,7 +264,7 @@ test('Hlídač-style logs expose a stable render snapshot and version', async ()
   h.calls.forEach((call, i) => h.reply(call, price(700 + i * 50)));
   await loading;
   const messages = h.logs.filter(entry => entry.level === 'log');
-  assert.equal(messages[0].args[1], 'Alza Benefit Prices – Version: 1.4.0');
+  assert.equal(messages[0].args[1], 'Alza Benefit Prices – Version: 1.4.1');
   assert.ok(messages.some(entry => entry.args[1]?.startsWith('Alza Benefit Prices – Loaded: 123 · 6/6 ·')));
   assert.ok(messages.some(entry => entry.args[1] === 'Alza Benefit Prices – Render:'));
   assert.equal(h.logs.some(entry => entry.level === 'warn'), false);
@@ -873,5 +883,286 @@ test('coupon headings use natural singular and plural wording in each supported 
       state.dispose();
     }
   }
+});
+function mutationElement({ anchor = false, nested = null, containsHost = false } = {}) {
+  return { nodeType: 1, matches: () => anchor, contains: () => containsHost, querySelector: () => nested };
+}
+function runFrames(h) {
+  const callbacks = [...h.frames.values()];
+  h.frames.clear();
+  callbacks.forEach(callback => callback());
+}
+test('mobile tracker inserted inside a distant wrapper moves the panel without polling', async () => {
+  const h = await harness({ hostname: 'm.alza.cz' });
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  state.host.isConnected = true;
+  const observer = h.observers[0];
+  assert.equal(observer.observations[0].target, h.doc.documentElement);
+  assert.equal(observer.observations[0].options.subtree, true);
+  let placed = 0;
+  const tracker = Object.assign(mutationElement({ anchor: true }), {
+    style: {}, before(host) { placed++; this.previousElementSibling = host; },
+  });
+  h.doc.querySelector = selector => selector === '[data-hs], #hlidacShopu' ? tracker : null;
+  observer.callback([{ type: 'childList', addedNodes: [mutationElement({ nested: tracker })], removedNodes: [] }]);
+  assert.equal(placed, 0);
+  assert.equal(h.frames.size, 1);
+  runFrames(h);
+  assert.equal(placed, 1);
+  assert.equal(h.intervals.size, 0, 'no polling interval was needed');
+  state.dispose();
+});
+test('tracker marked by an attribute after insertion is discovered immediately', async () => {
+  const h = await harness({ hostname: 'm.alza.cz' });
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  let placed = 0;
+  const tracker = Object.assign(mutationElement({ anchor: true }), {
+    style: {}, before(host) { placed++; this.previousElementSibling = host; },
+  });
+  h.doc.querySelector = selector => selector === '[data-hs], #hlidacShopu' ? tracker : null;
+  h.observers[0].callback([{ type: 'attributes', target: tracker, attributeName: 'data-hs' }]);
+  runFrames(h);
+  assert.equal(placed, 1);
+  state.dispose();
+});
+test('unrelated mutations do not remount and related bursts use a single frame', async () => {
+  const h = await harness({ hostname: 'm.alza.cz' });
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  const observer = h.observers[0];
+  const before = h.scans;
+  observer.callback([{ type: 'childList', addedNodes: [{ nodeType: 3 }, mutationElement()], removedNodes: [] }]);
+  observer.callback([{ type: 'attributes', target: mutationElement(), attributeName: 'id' }]);
+  assert.equal(h.frames.size, 0);
+  assert.equal(h.scans, before);
+  const relevant = [{ type: 'childList', addedNodes: [mutationElement({ anchor: true })], removedNodes: [] }];
+  observer.callback(relevant);
+  observer.callback(relevant);
+  assert.equal(h.frames.size, 1);
+  runFrames(h);
+  assert.ok(h.scans > before);
+  state.dispose();
+});
+test('removing the panel wrapper schedules an immediate repair', async () => {
+  const h = await harness({ hostname: 'm.alza.cz' });
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  h.observers[0].callback([{ type: 'childList', addedNodes: [], removedNodes: [mutationElement({ containsHost: true })] }]);
+  assert.equal(h.frames.size, 1);
+  runFrames(h);
+  state.dispose();
+});
+test('all mobile shops place the panel above the full-width price row without the tracker', async () => {
+  for (const country of ['cz', 'sk', 'hu', 'de', 'at']) {
+    const h = await harness({ hostname: 'm.alza.' + country });
+    const container = new Element();
+    let pricePlacements = 0;
+    let paymentPlacements = 0;
+    const priceRow = { style: { order: '0' }, before(host) {
+      pricePlacements++; host.parentNode = container; this.previousElementSibling = host;
+    } };
+    const price = { closest(selector) {
+      assert.equal(selector, '.price-info-row, .price-detail__row'); return priceRow;
+    } };
+    const payments = { style: {}, before() { paymentPlacements++; } };
+    h.doc.querySelector = selector => selector.includes('[data-testid="price-primary"]') ? price
+      : selector === '[data-react-client-component="alternativePricingModule"]' ? payments : null;
+    const state = h.api.createPanel('123');
+    h.api.setPanel(state, '123');
+    assert.equal(pricePlacements, 1);
+    assert.equal(paymentPlacements, 0);
+    assert.equal(state.host.parentNode, container);
+    assert.equal(state.host.style.width, '100%');
+    assert.equal(state.host.style.margin, '0');
+    h.api.sync();
+    assert.equal(pricePlacements, 1, 'already correctly placed panel must not be moved again');
+    state.dispose();
+  }
+});
+test('mobile tracker retains priority over the full-width price row', async () => {
+  const h = await harness({ hostname: 'm.alza.cz' });
+  let placed = 0;
+  const tracker = { style: {}, before(host) { placed++; this.previousElementSibling = host; } };
+  h.doc.querySelector = selector => selector === '[data-hs], #hlidacShopu' ? tracker : null;
+  const state = h.api.createPanel('123');
+  assert.equal(placed, 1);
+  state.dispose();
+});
+test('desktop keeps its existing payment-module placement', async () => {
+  const h = await harness({ hostname: 'www.alza.cz' });
+  let paymentPlacements = 0;
+  const payments = { style: {}, before(host) { paymentPlacements++; this.previousElementSibling = host; } };
+  h.doc.querySelector = selector => {
+    assert.equal(selector.includes('[data-testid="price-primary"]'), false,
+      'desktop must not prioritize the mobile price-row anchor');
+    return selector === '[data-react-client-component="alternativePricingModule"]' ? payments : null;
+  };
+  const state = h.api.createPanel('123');
+  assert.equal(paymentPlacements, 1);
+  state.dispose();
+});
+test('tracker lookup and data-hs observation are limited to CZ and SK shops', async () => {
+  for (const country of ['cz', 'sk', 'hu', 'de', 'at']) {
+    for (const prefix of ['', 'www.', 'm.']) {
+      const h = await harness({ hostname: prefix + 'alza.' + country });
+      const selectors = [];
+      h.doc.querySelector = selector => { selectors.push(selector); return null; };
+      const state = h.api.createPanel('123');
+      const supported = country === 'cz' || country === 'sk';
+      assert.equal(selectors.some(selector => selector.includes('[data-hs]')), supported);
+      assert.equal(h.observers[0].observations[0].options.attributeFilter.includes('data-hs'), supported);
+      state.dispose();
+    }
+  }
+});
+function trackerLayout(h) {
+  function node(type = 1) {
+    return {
+      nodeType: type, style: {}, parentNode: null, children: [],
+      contains(other) { for (let node = other; node; node = node.parentNode) if (node === this) return true; return false; },
+      get isConnected() { return Boolean(this.parentNode?.isConnected); },
+      get nextElementSibling() { return this.parentNode?.children.slice(this.parentNode.children.indexOf(this) + 1).find(n => n.nodeType !== 8) || null; },
+      get previousElementSibling() { return this.parentNode?.children.slice(0, this.parentNode.children.indexOf(this)).reverse().find(n => n.nodeType !== 8) || null; },
+      before(other) { insert(this, other, false); },
+      after(other) { insert(this, other, true); },
+      replaceWith(other) { insert(this, other, false); this.remove(); },
+      remove() { if (this.parentNode) { const p = this.parentNode; p.children.splice(p.children.indexOf(this), 1); this.parentNode = null; } },
+    };
+  }
+  function insert(anchor, other, after) {
+    if (other.parentNode) {
+      const old = other.parentNode;
+      old.children.splice(old.children.indexOf(other), 1);
+    }
+    const parent = anchor.parentNode;
+    parent.children.splice(parent.children.indexOf(anchor) + Number(after), 0, other);
+    other.parentNode = parent;
+  }
+  const left = { children: [], isConnected: true };
+  const right = { children: [], isConnected: true };
+  const strip = node(); strip.parentNode = left; left.children.push(strip);
+  const tracker = node(); tracker.parentNode = right; right.children.push(tracker);
+  tracker.style.margin = '7px'; tracker.style.order = '3';
+  const payments = node(); payments.parentNode = right; right.children.push(payments);
+  h.doc.createComment = () => node(8);
+  let visible = true;
+  h.doc.querySelector = selector => selector === '#detailPicture' ? strip
+    : selector === '[data-hs], #hlidacShopu' ? (visible && tracker.isConnected ? tracker : null)
+    : selector === '[data-react-client-component="alternativePricingModule"]' ? payments : null;
+  return { left, right, strip, tracker, payments, setVisible(value) { visible = value; } };
+}
+function findOption(state, text) {
+  const walk = root => [root, ...root.children.filter(child => typeof child === 'object').flatMap(walk)];
+  return walk(state.settings).find(element => element.checkbox && walk(element).some(child => child.textContent === text));
+}
+function toggle(option, checked) { option.checkbox.checked = checked; option.checkbox.onchange(); }
+const trackerOptionTitle = 'Přesunout Hlídač shopů doleva';
+test('tracker photo option appears only after finding the tracker and restores its position when disabled', async () => {
+  const h = await harness();
+  const layout = trackerLayout(h);
+  layout.setVisible(false);
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  const option = findOption(state, trackerOptionTitle);
+  assert.equal(option.hidden, true);
+  layout.setVisible(true);
+  h.api.sync();
+  assert.equal(option.hidden, false);
+  toggle(option, true);
+  assert.equal(layout.tracker.parentNode, layout.left);
+  assert.equal(layout.strip.nextElementSibling, layout.tracker);
+  assert.equal(state.host.parentNode, layout.right);
+  assert.equal(layout.tracker.style.margin, '12px 0');
+  toggle(option, false);
+  assert.equal(layout.tracker.parentNode, layout.right);
+  assert.equal(layout.tracker.style.margin, '7px');
+  assert.equal(layout.tracker.style.order, '3');
+  assert.equal(layout.tracker.previousElementSibling, state.host);
+  state.dispose();
+});
+test('moving tracker and moving price panel are mutually exclusive and saved together', async () => {
+  const h = await harness();
+  const layout = trackerLayout(h);
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  const priceOption = findOption(state, 'Přesunout ceník doleva');
+  const trackerOption = findOption(state, trackerOptionTitle);
+  toggle(priceOption, true);
+  assert.equal(state.host.parentNode, layout.left);
+  toggle(trackerOption, true);
+  assert.equal(priceOption.checkbox.checked, false);
+  assert.equal(state.host.parentNode, layout.right);
+  assert.equal(layout.tracker.parentNode, layout.left);
+  await h.api.settingWrites;
+  let saved = h.storageWrites.at(-1).value;
+  assert.equal(saved['panel-below-photo'], false);
+  assert.equal(saved['tracker-below-photo'], true);
+  toggle(priceOption, true);
+  assert.equal(trackerOption.checkbox.checked, false);
+  assert.equal(layout.tracker.parentNode, layout.right);
+  assert.equal(state.host.parentNode, layout.left);
+  await h.api.settingWrites;
+  saved = h.storageWrites.at(-1).value;
+  assert.equal(saved['panel-below-photo'], true);
+  assert.equal(saved['tracker-below-photo'], false);
+  state.dispose();
+});
+test('tracker photo preference is desktop-only and supported only in CZ/SK', async () => {
+  for (const hostname of ['m.alza.cz', 'm.alza.sk', 'www.alza.hu', 'www.alza.de', 'www.alza.at']) {
+    const h = await harness({ hostname, settings: { 'tracker-below-photo': true } });
+    const layout = trackerLayout(h);
+    const state = h.api.createPanel('123');
+    const option = state.settings.children.find(child => child.tagName === 'fieldset' && child.children[0]?.textContent === ({
+      'm.alza.cz': 'Zobrazení', 'm.alza.sk': 'Zobrazenie', 'www.alza.hu': 'Megjelenítés', 'www.alza.de': 'Anzeige', 'www.alza.at': 'Anzeige',
+    })[hostname]);
+    const trackerControl = option.children[1].children[2];
+    assert.equal(trackerControl.hidden, true, hostname);
+    assert.equal(layout.tracker.parentNode, layout.right, hostname);
+    state.dispose();
+  }
+  const h = await harness({ hostname: 'www.alza.sk', settings: { 'tracker-below-photo': true } });
+  const layout = trackerLayout(h);
+  const state = h.api.createPanel('123');
+  assert.equal(findOption(state, 'Presunúť Hlídač shopů pod fotku').hidden, false);
+  assert.equal(layout.tracker.parentNode, layout.left);
+  state.dispose();
+});
+test('navigation restores the tracker before disposing the product panel', async () => {
+  const h = await harness({ settings: { 'tracker-below-photo': true } });
+  const layout = trackerLayout(h);
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  assert.equal(layout.tracker.parentNode, layout.left);
+  h.location.pathname = '/category.htm';
+  h.api.sync();
+  assert.equal(layout.tracker.parentNode, layout.right);
+  assert.equal(layout.tracker.style.margin, '7px');
+});
+test('an externally removed tracker is not resurrected when the option is disabled', async () => {
+  const h = await harness({ settings: { 'tracker-below-photo': true } });
+  const layout = trackerLayout(h);
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  layout.tracker.remove();
+  toggle(findOption(state, trackerOptionTitle), false);
+  assert.equal(layout.tracker.parentNode, null);
+  assert.equal(layout.right.children.some(child => child.nodeType === 8), false);
+  state.dispose();
+});
+test('disabling tracker relocation still restores it after the original marker is removed', async () => {
+  const h = await harness({ settings: { 'tracker-below-photo': true } });
+  const layout = trackerLayout(h);
+  const state = h.api.createPanel('123');
+  h.api.setPanel(state, '123');
+  const marker = layout.right.children.find(child => child.nodeType === 8);
+  marker.remove(); // A page re-render discarded the remembered original position.
+  toggle(findOption(state, trackerOptionTitle), false);
+  assert.equal(layout.tracker.parentNode, layout.right);
+  assert.equal(layout.tracker.nextElementSibling, layout.payments);
+  assert.equal(layout.tracker.style.margin, '7px');
+  assert.equal(layout.tracker.style.order, '3');
+  state.dispose();
 });
 module.exports = { harness, price };

@@ -3,7 +3,7 @@
 // @icon         https://www.alza.cz/favicon-alza.ico
 // @author       Dexnis
 // @namespace    alza-benefit-prices
-// @version      1.4.0
+// @version      1.4.1
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists
@@ -71,6 +71,7 @@
     : /(?:^|\.)alza\.at$/i.test(location.hostname) ? 'AT' : 'CZ';
   const locale = { SK: 'sk-SK', HU: 'hu-HU', DE: 'de-DE', AT: 'de-AT', CZ: 'cs-CZ' }[country];
   const euro = ['SK', 'DE', 'AT'].includes(country); // prices in euro, with cents
+  const hasTracker = country === 'CZ' || country === 'SK';
   const hasIsic = !['HU', 'AT'].includes(country); // these shops have no ISIC price list
   const discountFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const priceFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
@@ -115,6 +116,8 @@
       optAlwaysHint: 'Zobrazí zapnuté ceníky i bez slevy nebo při shodných cenách.',
       optLeft: 'Přesunout ceník doleva',
       optLeftHint: 'Přesune ceník z pravého sloupce pod miniatury fotek vlevo.',
+      optTrackerLeft: 'Přesunout Hlídač shopů doleva',
+      optTrackerLeftHint: 'Přesune Hlídač shopů z pravého sloupce pod miniatury fotek vlevo.',
       clear: 'Smazat',
       clearAffiliate: 'Smazat affiliate ID',
       whatIsAffiliate: 'Co je affiliate ID?',
@@ -158,6 +161,8 @@
       optAlwaysHint: 'Zobrazí zapnuté cenníky aj bez zľavy alebo pri rovnakých cenách.',
       optLeft: 'Presunúť cenník doľava',
       optLeftHint: 'Presunie cenník z pravého stĺpca pod miniatúry fotiek vľavo.',
+      optTrackerLeft: 'Presunúť Hlídač shopů pod fotku',
+      optTrackerLeftHint: 'Presunie Hlídač shopů pod fotky vľavo. Vypne presunutie cenníka doľava.',
       clear: 'Zmazať',
       clearAffiliate: 'Zmazať affiliate ID',
       whatIsAffiliate: 'Čo je affiliate ID?',
@@ -201,6 +206,8 @@
       optAlwaysHint: 'Always shows your enabled price lists, even when a price list has no discount or all price lists have the same price.',
       optLeft: 'Move the price list to the left',
       optLeftHint: 'Moves the price list from the right column to the left, below the product photo thumbnails.',
+      optTrackerLeft: 'Move Hlídač shopů below the photos',
+      optTrackerLeftHint: 'Moves Hlídač shopů below the photos on the left. Turns off moving the price panel to the left.',
       clear: 'Clear',
       clearAffiliate: 'Clear affiliate ID',
       whatIsAffiliate: 'What is an affiliate ID?',
@@ -244,6 +251,8 @@
       optAlwaysHint: 'Zeigt deine aktivierten Preislisten immer an, auch wenn eine Preisliste keinen Rabatt hat oder alle Preislisten denselben Preis haben.',
       optLeft: 'Preisliste nach links verschieben',
       optLeftHint: 'Verschiebt die Preisliste aus der rechten Spalte nach links unter die Miniaturen der Produktfotos.',
+      optTrackerLeft: 'Hlídač shopů unter die Fotos verschieben',
+      optTrackerLeftHint: 'Verschiebt Hlídač shopů links unter die Fotos. Deaktiviert das Verschieben der Preisliste nach links.',
       clear: 'Löschen',
       clearAffiliate: 'Affiliate-ID löschen',
       whatIsAffiliate: 'Was ist eine Affiliate-ID?',
@@ -287,6 +296,8 @@
       optAlwaysHint: 'A bekapcsolt árlistákat mindig megjeleníti, akkor is, ha egy árlistának nincs kedvezménye, vagy minden árlistának ugyanaz az ára.',
       optLeft: 'Árlista áthelyezése balra',
       optLeftHint: 'Az árlistát a jobb oszlopból balra, a termékfotók bélyegképei alá helyezi át.',
+      optTrackerLeft: 'A Hlídač shopů áthelyezése a képek alá',
+      optTrackerLeftHint: 'A Hlídač shopů paneljét balra, a képek alá helyezi. Kikapcsolja az árlista balra helyezését.',
       clear: 'Törlés',
       clearAffiliate: 'Partnerazonosító törlése',
       whatIsAffiliate: 'Mi az a partnerazonosító?',
@@ -318,6 +329,7 @@
     placedTracker: 'before Hlídač shopů',
     placedModule: 'before the alternative pricing module',
     placedPrice: 'below the main price',
+    placedAbovePrice: 'above the main price',
     pageChanged: 'The page changed in the meantime.',
     nothingToCopy: 'No price to copy.',
     copiedLog: 'Copied: ',
@@ -354,7 +366,7 @@
   // Match Hlídač shopů's plain prefix and expandable Render object.
   // Per-request diagnostics stay at Verbose level; warnings report actual failures.
   const LOG_PREFIX = 'Alza Benefit Prices – ';
-  const SCRIPT_VERSION = '1.4.0';
+  const SCRIPT_VERSION = '1.4.1';
   // Use a fixed format string so a coupon/product containing "%c" cannot style the console.
   const log = (message, ...details) => console.log('%s', LOG_PREFIX + message, ...details);
   const debug = (message, ...details) => console.debug('%s', LOG_PREFIX + message, ...details);
@@ -400,8 +412,10 @@
   let cashbackPromos = storedSettings['cashback-price-promos'] !== false;
   let tradeInPromos = storedSettings['trade-in-promos'] !== false;
   let alwaysShow = storedSettings['always-show-tiers'] === true;
-  let belowPhoto = storedSettings['panel-below-photo'] === true;
+  let trackerBelowPhoto = hasTracker && !mobile && storedSettings['tracker-below-photo'] === true;
+  let belowPhoto = storedSettings['panel-below-photo'] === true && !trackerBelowPhoto;
   let belowPhotoOption = null;
+  let trackerPhotoOption = null;
   // Affiliate ID added to the copied link as ?idp=<number>; digits only.
   let affiliateId = String(storedSettings['affiliate-idp'] ?? '').replace(/\D/g, '').slice(0, 12);
 
@@ -428,7 +442,7 @@
   // Keys are the storage keys of the settings, so the overview is the same in every shop.
   debug(LOG.logSettings, {
     'enabled-price-tiers': { ...enabled }, 'alza-plus-promos': alzaPlusPromos, 'cashback-price-promos': cashbackPromos,
-    'trade-in-promos': tradeInPromos, 'always-show-tiers': alwaysShow, 'panel-below-photo': belowPhoto, 'affiliate-idp': Boolean(affiliateId),
+    'trade-in-promos': tradeInPromos, 'always-show-tiers': alwaysShow, 'panel-below-photo': belowPhoto, 'tracker-below-photo': trackerBelowPhoto, 'affiliate-idp': Boolean(affiliateId),
   });
   let activeId = null;
   let generation = 0;
@@ -762,30 +776,50 @@
     return icon;
   }
 
-  // Hlídač shopů is injected after the page loads; re-mount as soon as a sibling appears.
+  // Extensions and Alza may insert pricing anchors inside a late-rendered wrapper,
+  // outside the panel's immediate parents. Watch the document, but only react to
+  // added/removed anchors or the panel itself; ordinary page mutations do no remount.
+  const PLACEMENT_ANCHORS = (hasTracker ? '[data-hs], #hlidacShopu, ' : '') + '#detailPicture, '
+    + '[data-react-client-component="alternativePricingModule"], '
+    + '[data-react-client-component="promoListModule"], '
+    + '.js-price-detail__main-price-box-wrapper, [data-testid="price-primary"]';
   let mountFrame = 0;
-  const mountObserver = new MutationObserver(() => {
-    if (mountFrame) return;
-    mountFrame = requestAnimationFrame(() => { mountFrame = 0; if (panel) mount(panel.host); });
+  const mountObserver = new MutationObserver(records => {
+    if (!panel || mountFrame) return;
+    const host = panel.host;
+    const affectsPlacement = element => element.nodeType === 1 && (
+      element === host || element.contains(host) || element.matches(PLACEMENT_ANCHORS)
+      || element.querySelector(PLACEMENT_ANCHORS));
+    const relevant = records.some(record => {
+      if (record.type === 'attributes') return record.target.matches(PLACEMENT_ANCHORS);
+      return Array.prototype.some.call(record.addedNodes, affectsPlacement)
+        || Array.prototype.some.call(record.removedNodes, affectsPlacement);
+    });
+    if (!relevant) return;
+    // Batch related mutations and synchronize navigation before placing the panel.
+    mountFrame = requestAnimationFrame(() => { mountFrame = 0; sync(); });
   });
 
   // The gallery can render after the panel; retry briefly until the photo strip exists.
   let stripRetries = 0;
   let stripTimer = 0;
-  let observedParent = null;
+  let observedRoot = null;
 
   function mount(host) {
     place(host);
     clearTimeout(stripTimer);
-    if (belowPhoto && !mobile && !stripAvailable && stripRetries++ < 12) {
+    if ((belowPhoto || trackerBelowPhoto) && !mobile && !stripAvailable && stripRetries++ < 12) {
       stripTimer = setTimeout(() => { if (panel) mount(panel.host); }, 250);
     }
-    if (host.parentNode !== observedParent) {
+    if (document.documentElement !== observedRoot) {
       mountObserver.disconnect();
-      observedParent = host.parentNode;
-      // The parent and its parent: a block that renders next to the panel's wrapper (e.g. the gift) counts too.
-      if (observedParent) mountObserver.observe(observedParent, { childList: true });
-      if (observedParent?.parentNode) mountObserver.observe(observedParent.parentNode, { childList: true });
+      observedRoot = document.documentElement;
+      if (observedRoot) mountObserver.observe(observedRoot, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['id', 'data-react-client-component', 'data-testid', ...(hasTracker ? ['data-hs'] : [])],
+      });
     }
   }
 
@@ -803,30 +837,79 @@
     debug(LOG.placed + where + '.');
   }
 
+  // Remember the exact position without touching Hlídač shopů's internal content.
+  let trackerHome = null;
+  function restoreTracker() {
+    const home = trackerHome;
+    trackerHome = null;
+    if (!home) return;
+    if (home.tracker.isConnected) {
+      if (home.placeholder.isConnected) home.placeholder.replaceWith(home.tracker);
+      else {
+        // Alza may replace the original container while the tracker is on the left.
+        const pricingModule = document.querySelector('[data-react-client-component="alternativePricingModule"]');
+        const price = pricingModule ? null
+          : document.querySelector('.js-price-detail__main-price-box-wrapper, [data-testid="price-primary"]');
+        const anchor = pricingModule || price?.closest('.price-detail__row, .price-info-row') || price;
+        if (anchor && !home.tracker.contains(anchor)) anchor.before(home.tracker);
+      }
+      home.tracker.style.margin = home.margin;
+      home.tracker.style.order = home.order;
+    }
+    home.placeholder.remove();
+  }
+
+  function photoAnchor(strip) {
+    const gift = document.querySelector('[data-react-client-component="promoListModule"]');
+    return gift && gift.parentNode.contains(strip) && !gift.contains(strip)
+      && (strip.compareDocumentPosition(gift) & Node.DOCUMENT_POSITION_FOLLOWING) ? gift : strip;
+  }
+
+  function moveTrackerBelowPhoto(tracker, strip) {
+    if (trackerHome?.tracker !== tracker) restoreTracker();
+    if (!trackerHome) {
+      const placeholder = document.createComment('Alza Benefit Prices: original tracker position');
+      tracker.before(placeholder);
+      trackerHome = { tracker, placeholder, margin: tracker.style.margin, order: tracker.style.order };
+    }
+    const anchor = photoAnchor(strip);
+    tracker.style.margin = '12px 0';
+    tracker.style.order = '';
+    if (anchor.nextElementSibling !== tracker) anchor.after(tracker);
+  }
+
   function place(host) {
     // Hlídačshopů's content lives in a closed shadow root; use its outer host.
     // Desktop only: offered whenever the photo strip is on the page.
     const strip = mobile ? null : photoStrip();
     stripAvailable = Boolean(strip);
+    const tracker = hasTracker ? document.querySelector('[data-hs], #hlidacShopu') : null;
+    const canMoveTracker = hasTracker && !mobile && Boolean(tracker && strip);
     if (belowPhotoOption) belowPhotoOption.hidden = !strip;
+    if (trackerPhotoOption) trackerPhotoOption.hidden = !canMoveTracker;
+    const trackerMoved = canMoveTracker && trackerBelowPhoto;
+    if (trackerMoved) moveTrackerBelowPhoto(tracker, strip);
+    else restoreTracker();
     if (strip && belowPhoto) {
       host.style.margin = '12px 0';
       host.style.order = '';
-      // A gift block ("dárek") in the same column, after the photo, keeps its place above the panel.
-      const gift = document.querySelector('[data-react-client-component="promoListModule"]');
-      const anchor = gift && gift.parentNode.contains(strip) && !gift.contains(strip)
-        && strip.compareDocumentPosition(gift) & Node.DOCUMENT_POSITION_FOLLOWING ? gift : strip;
+      const anchor = photoAnchor(strip);
       if (anchor.nextElementSibling !== host) anchor.after(host);
-      placed(anchor === gift ? LOG.placedGift : LOG.placedPhoto);
+      placed(anchor === strip ? LOG.placedPhoto : LOG.placedGift);
       return;
     }
     host.style.margin = mobile ? '0' : '0 0 12px';
-    const tracker = document.querySelector('[data-hs], #hlidacShopu');
-    const before = tracker || document.querySelector('[data-react-client-component="alternativePricingModule"]');
+    const priceTracker = trackerMoved ? null : tracker;
+    // Mobile payment options live in a narrower block. Use the whole main-price row
+    // instead, sharing the full-width container used by Hlídač shopů.
+    const mobilePrice = mobile && !tracker
+      ? document.querySelector('.js-price-detail__main-price-box-wrapper, [data-testid="price-primary"]') : null;
+    const mobilePriceRow = mobilePrice?.closest('.price-info-row, .price-detail__row') || mobilePrice;
+    const before = priceTracker || mobilePriceRow || document.querySelector('[data-react-client-component="alternativePricingModule"]');
     if (before) {
       host.style.order = before.style.order || '';
       if (before.previousElementSibling !== host) before.before(host);
-      placed(tracker ? LOG.placedTracker : LOG.placedModule);
+      placed(priceTracker ? LOG.placedTracker : mobilePriceRow ? LOG.placedAbovePrice : LOG.placedModule);
       return;
     }
     const price = document.querySelector('.js-price-detail__main-price-box-wrapper, [data-testid="price-primary"]');
@@ -1196,7 +1279,8 @@
       option.className = 'option';
       const row = node('div', null, option);
       row.className = 'option-row';
-      addCheckbox(row, text, checked, update);
+      const label = addCheckbox(row, text, checked, update);
+      option.checkbox = label.children[0];
       const help = node('button', '?', row);
       help.className = 'help';
       help.type = 'button';
@@ -1211,10 +1295,26 @@
       T.optLeftHint,
       belowPhoto, value => {
         belowPhoto = value;
+        if (value) {
+          trackerBelowPhoto = false;
+          trackerPhotoOption.checkbox.checked = false;
+          saveSetting('tracker-below-photo', false);
+        }
         saveSetting('panel-below-photo', value);
         mount(host);
       });
     belowPhotoOption.hidden = true;
+    trackerPhotoOption = viewOption(T.optTrackerLeft, T.optTrackerLeftHint, trackerBelowPhoto, value => {
+      trackerBelowPhoto = value;
+      if (value) {
+        belowPhoto = false;
+        belowPhotoOption.checkbox.checked = false;
+        saveSetting('panel-below-photo', false);
+      }
+      saveSetting('tracker-below-photo', value);
+      mount(host);
+    });
+    trackerPhotoOption.hidden = true;
     const idpRow = addGroup('Affiliate', 'option-row');
     const idpWrap = node('span', null, idpRow);
     idpWrap.className = 'idp-wrap';
@@ -1533,6 +1633,7 @@
           promotions: { plus: alzaPlusPromos, cashback: cashbackPromos, tradeIn: tradeInPromos },
           alwaysShow,
           belowPhoto,
+          trackerBelowPhoto,
           affiliate: Boolean(affiliateId),
         },
       },
@@ -1634,7 +1735,8 @@
       mountObserver.disconnect();
       cancelAnimationFrame(mountFrame);
       mountFrame = 0;
-      observedParent = null;
+      observedRoot = null;
+      restoreTracker();
       panel?.dispose();
       panel?.host.remove(); panel = null; activeId = id;
       stripRetries = 0;
@@ -1693,6 +1795,7 @@
       clearTimeout(stripTimer);
       cancelAnimationFrame(mountFrame);
       mountObserver.disconnect();
+      restoreTracker();
       panel?.dispose();
       cancel();
     }
