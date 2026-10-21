@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <title>Alza Benefit Prices</title>
+  <path fill="#545FEF" fill-rule="evenodd" d="M52 28h72a24 24 0 0 1 17 7l80 80a24 24 0 0 1 0 34l-72 72a24 24 0 0 1-34 0l-80-80a24 24 0 0 1-7-17V52a24 24 0 0 1 24-24Zm16 28a12 12 0 1 0 0 24 12 12 0 0 0 0-24Z" clip-rule="evenodd"/>
+  <path stroke="#fff" stroke-linecap="round" stroke-width="16" d="M138 106v64m-32-32h64"/>
+</svg>
