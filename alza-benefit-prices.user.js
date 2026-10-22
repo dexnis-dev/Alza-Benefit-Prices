@@ -3,7 +3,7 @@
 // @icon         https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/photos/logo/logo.svg
 // @author       Dexnis
 // @namespace    alza-benefit-prices
-// @version      1.5.0
+// @version      1.5.1
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists
@@ -67,16 +67,14 @@
   const euro = ['SK', 'DE', 'AT'].includes(country); // prices in euro, with cents
   // Feature matrix is also read by the regional userscript generator.
   const SHOP_FEATURES = {
-    "CZ": { "tracker": true, "fxalza": true, "isic": true, "desktopRedirect": true },
-    "SK": { "tracker": true, "fxalza": false, "isic": true, "desktopRedirect": false },
-    "HU": { "tracker": false, "fxalza": false, "isic": false, "desktopRedirect": false },
-    "DE": { "tracker": false, "fxalza": false, "isic": true, "desktopRedirect": false },
-    "AT": { "tracker": false, "fxalza": false, "isic": false, "desktopRedirect": false }
+    "CZ": { "tracker": true, "fxalza": true, "isic": true },
+    "SK": { "tracker": true, "fxalza": true, "isic": true },
+    "HU": { "tracker": false, "fxalza": true, "isic": false },
+    "DE": { "tracker": false, "fxalza": true, "isic": true },
+    "AT": { "tracker": false, "fxalza": true, "isic": false }
   };
   const { tracker: hasTracker, fxalza: hasFxalza } = SHOP_FEATURES[country];
-  // #feature desktopRedirect
-  const hasDesktopRedirect = SHOP_FEATURES[country].desktopRedirect;
-  // #endfeature
+  // #betteralza config
   const hasIsic = !['HU', 'AT'].includes(country); // these shops have no ISIC price list
   const discountFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const priceFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
@@ -128,8 +126,7 @@
       helpAbout: 'Co dělá volba: ',
       optAlways: 'Vždy zobrazit ceníky',
       optAlwaysHint: 'Zobrazí zapnuté ceníky i bez slevy nebo při shodných cenách.',
-      optDesktopCz: 'Vždy český desktopový web',
-      optDesktopCzHint: 'Na počítači přesměruje m.alza.cz na www.alza.cz a z adresy odstraní /EN/ a setlang. Před přesměrováním smaže cookies a data relace webu; může tě odhlásit. Mobilní zařízení neovlivní.',
+      // #betteralza labels-cs
       optLeft: 'Přesunout ceník doleva',
       optLeftHint: 'Přesune ceník z pravého sloupce pod miniatury fotek vlevo.',
       optTrackerLeft: 'Přesunout Hlídač shopů doleva',
@@ -184,8 +181,7 @@
       helpAbout: 'Čo robí voľba: ',
       optAlways: 'Vždy zobraziť cenníky',
       optAlwaysHint: 'Zobrazí zapnuté cenníky aj bez zľavy alebo pri rovnakých cenách.',
-      optDesktopCz: 'Vždy český desktopový web',
-      optDesktopCzHint: 'Na počítači presmeruje m.alza.cz na www.alza.cz a z adresy odstráni /EN/ a setlang. Pred presmerovaním vymaže cookies a údaje relácie webu; môže ťa odhlásiť. Mobilné zariadenia neovplyvní.',
+      // #betteralza labels-sk
       optLeft: 'Presunúť cenník doľava',
       optLeftHint: 'Presunie cenník z pravého stĺpca pod miniatúry fotiek vľavo.',
       optTrackerLeft: 'Presunúť Hlídač shopů pod fotku',
@@ -240,8 +236,7 @@
       helpAbout: 'What the option does: ',
       optAlways: 'Always show price lists',
       optAlwaysHint: 'Always shows your enabled price lists, even when a price list has no discount or all price lists have the same price.',
-      optDesktopCz: 'Use Czech desktop site',
-      optDesktopCzHint: 'On computers, redirects m.alza.cz to www.alza.cz and removes /EN/ and setlang. Clears site cookies and session data before redirecting; this may sign you out. Does not affect mobile devices.',
+      // #betteralza labels-en
       optLeft: 'Move the price list to the left',
       optLeftHint: 'Moves the price list from the right column to the left, below the product photo thumbnails.',
       optTrackerLeft: 'Move Hlídač shopů below the photos',
@@ -296,8 +291,7 @@
       helpAbout: 'Was die Option bewirkt: ',
       optAlways: 'Preislisten immer anzeigen',
       optAlwaysHint: 'Zeigt deine aktivierten Preislisten immer an, auch wenn eine Preisliste keinen Rabatt hat oder alle Preislisten denselben Preis haben.',
-      optDesktopCz: 'Tschechische Desktop-Seite verwenden',
-      optDesktopCzHint: 'Leitet auf Computern m.alza.cz zu www.alza.cz um und entfernt /EN/ sowie setlang. Löscht vor der Weiterleitung Website-Cookies und Sitzungsdaten; dabei kannst du abgemeldet werden. Mobilgeräte bleiben unverändert.',
+      // #betteralza labels-de
       optLeft: 'Preisliste nach links verschieben',
       optLeftHint: 'Verschiebt die Preisliste aus der rechten Spalte nach links unter die Miniaturen der Produktfotos.',
       optTrackerLeft: 'Hlídač shopů unter die Fotos verschieben',
@@ -352,8 +346,7 @@
       helpAbout: 'Mit csinál a beállítás: ',
       optAlways: 'Árlisták mindig megjelenítése',
       optAlwaysHint: 'A bekapcsolt árlistákat mindig megjeleníti, akkor is, ha egy árlistának nincs kedvezménye, vagy minden árlistának ugyanaz az ára.',
-      optDesktopCz: 'Cseh asztali webhely használata',
-      optDesktopCzHint: 'Számítógépen az m.alza.cz címet a www.alza.cz oldalra irányítja, és eltávolítja a /EN/ és setlang részeket. Átirányítás előtt törli a webhely sütijeit és munkamenetadatait; ez kijelentkeztethet. Mobileszközöket nem érint.',
+      // #betteralza labels-hu
       optLeft: 'Árlista áthelyezése balra',
       optLeftHint: 'Az árlistát a jobb oszlopból balra, a termékfotók bélyegképei alá helyezi át.',
       optTrackerLeft: 'A Hlídač shopů áthelyezése a képek alá',
@@ -426,7 +419,7 @@
   // Match Hlídač shopů's plain prefix and expandable Render object.
   // Per-request diagnostics stay at Verbose level; warnings report actual failures.
   const LOG_PREFIX = 'Alza Benefit Prices – ';
-  const SCRIPT_VERSION = '1.5.0';
+  const SCRIPT_VERSION = '1.5.1';
   // Use a fixed format string so a coupon/product containing "%c" cannot style the console.
   const log = (message, ...details) => console.log('%s', LOG_PREFIX + message, ...details);
   const debug = (message, ...details) => console.debug('%s', LOG_PREFIX + message, ...details);
@@ -474,11 +467,8 @@
   const savedSettings = await getSetting('settings', {});
   const storedSettings = savedSettings && typeof savedSettings === 'object' && !Array.isArray(savedSettings)
     ? savedSettings : {};
-  // #feature desktopRedirect
-  let desktopCleanUrl = hasDesktopRedirect && storedSettings['desktop-clean-url'] === true;
-  if (redirectDesktopAlza()) return;
-  // #endfeature
-  // Non-product pages only apply the optional Czech URL preference.
+  // #betteralza startup
+  // The standalone userscript only runs on product pages.
   if (!productId(location.pathname, location.search)) return;
   const savedTiers = storedSettings['enabled-price-tiers'] || {};
   const enabled = Object.fromEntries(TIERS.map(tier => [tier.name, savedTiers[tier.name] !== false]));
@@ -525,66 +515,7 @@
   const pending = new Set();
   const inFlight = new Map();
 
-  // #feature desktopRedirect
-  function isDesktopAlza() {
-    return hasDesktopRedirect && navigator.userAgentData?.mobile !== true
-      && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')
-      && !(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-      && matchMedia('(hover: hover) and (pointer: fine)').matches;
-  }
-
-  function desktopRedirectTarget(href) {
-    const url = new URL(href);
-    if (url.protocol !== 'https:' || !['alza.cz', 'www.alza.cz', 'm.alza.cz'].includes(url.hostname)) return null;
-    if (url.hostname === 'm.alza.cz') url.hostname = 'www.alza.cz';
-    url.pathname = url.pathname.replace(/^\/en(?=\/|$)/i, '') || '/';
-    for (const key of [...url.searchParams.keys()]) if (key.toLowerCase() === 'setlang') url.searchParams.delete(key);
-    return url.href !== href ? url.href : null;
-  }
-
-  function clearDesktopSiteState() {
-    // Remove only cookies visible to JavaScript on this host. HttpOnly cookies are inaccessible.
-    try {
-      const names = [...new Set(String(document.cookie || '').split(';').map(cookie => cookie.split('=')[0].trim()).filter(Boolean))];
-      const domains = new Set(['', location.hostname, 'alza.cz']);
-      const paths = new Set(['/']);
-      const parts = location.pathname.split('/').filter(Boolean);
-      while (parts.length) {
-        const path = '/' + parts.join('/');
-        if (!path.includes(';')) { paths.add(path); paths.add(path + '/'); }
-        parts.pop();
-      }
-      for (const name of names) for (const domain of domains) for (const path of paths) {
-        document.cookie = name + '=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=' + path
-          + (domain ? '; Domain=' + domain : '') + '; Secure';
-      }
-    } catch (error) { warn('Could not clear site cookies: ' + error.message); }
-    try { sessionStorage.clear(); }
-    catch (error) { warn('Could not clear site sessionStorage: ' + error.message); }
-  }
-
-  function redirectDesktopAlza() {
-    if (!desktopCleanUrl || !isDesktopAlza()) return false;
-    const target = desktopRedirectTarget(location.href);
-    if (!target) return false;
-    // Stop a server-enforced mobile/language preference from causing a redirect loop.
-    const key = 'alza-benefit-prices-desktop-redirect';
-    try {
-      const previous = JSON.parse(sessionStorage.getItem(key) || 'null');
-      if (previous?.from === location.href && previous.target === target
-        && Date.now() - previous.time >= 0 && Date.now() - previous.time < 10000) {
-        warn('Desktop redirect paused: Alza returned to the same URL.');
-        return false;
-      }
-    } catch { /* The URL guard is optional if this browser blocks session storage. */ }
-    clearDesktopSiteState();
-    // Preserve our loop guard after clearing the page's session data.
-    try { sessionStorage.setItem(key, JSON.stringify({ from: location.href, target, time: Date.now() })); }
-    catch { /* The redirect also works without session storage. */ }
-    location.replace(target);
-    return true;
-  }
-  // #endfeature
+  // #betteralza helpers
 
   function productId(pathname, search = '') {
     const variant = new URLSearchParams(search).get('dq');
@@ -910,7 +841,7 @@
     const url = new URL(location.href);
     url.hostname = 'www.alza.' + country.toLowerCase();
     // #feature fxalza
-    if (hasFxalza) url.hostname = 'fxalza.cz';
+    if (hasFxalza) url.hostname = country === 'CZ' ? 'fxalza.cz' : country.toLowerCase() + '.fxalza.cz';
     // #endfeature
     url.pathname = url.pathname.replace(/^\/en(?=\/)/i, '');
     const variant = url.searchParams.get('dq');
@@ -1771,17 +1702,7 @@
     });
     trackerPhotoOption.hidden = true;
   // #endfeature
-    // #feature desktopRedirect
-    if (isDesktopAlza()) {
-      viewOption(T.optDesktopCz, T.optDesktopCzHint, desktopCleanUrl, value => {
-        desktopCleanUrl = value;
-        saveSetting('desktop-clean-url', value);
-        if (value) void Promise.resolve(settingWrites).then(() => {
-          if (!disposed && isCurrent()) redirectDesktopAlza();
-        });
-      });
-    }
-    // #endfeature
+    // #betteralza settings
     const shareOptions = addGroup(T.groupShare, 'share-options');
     // #feature fxalza
     if (hasFxalza) {
@@ -2282,9 +2203,7 @@
   }
 
   function sync(remount = true) {
-    // #feature desktopRedirect
-    if (redirectDesktopAlza()) return;
-    // #endfeature
+    // #betteralza sync
     const id = productId(location.pathname, location.search);
     const language = pageLanguage();
     if (id !== activeId || language !== activeLanguage) {
