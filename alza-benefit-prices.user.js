@@ -3,7 +3,7 @@
 // @icon         https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/photos/logo/logo.svg
 // @author       Dexnis
 // @namespace    alza-benefit-prices
-// @version      1.5.1
+// @version      1.5.2
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists
@@ -419,7 +419,7 @@
   // Match Hlídač shopů's plain prefix and expandable Render object.
   // Per-request diagnostics stay at Verbose level; warnings report actual failures.
   const LOG_PREFIX = 'Alza Benefit Prices – ';
-  const SCRIPT_VERSION = '1.5.1';
+  const SCRIPT_VERSION = '1.5.2';
   // Use a fixed format string so a coupon/product containing "%c" cannot style the console.
   const log = (message, ...details) => console.log('%s', LOG_PREFIX + message, ...details);
   const debug = (message, ...details) => console.debug('%s', LOG_PREFIX + message, ...details);
@@ -551,7 +551,7 @@
     const number = Number(text.replace(',', '.'));
     return Number.isFinite(number) ? number : null;
   }
-
+  
   function findPricing(value, depth = 0) {
     if (!value || typeof value !== 'object' || depth > 15) return null;
     if (value.mainPriceTag || Array.isArray(value.promoPrices)) return value;
@@ -561,7 +561,7 @@
     }
     return null;
   }
-
+  
   // Call only for promotion records, never main/alternative price tags.
   function promoKind(priceType, coupon) {
     return priceType === 4 ? 'plus' : coupon ? 'coupon'
@@ -581,10 +581,22 @@
     // "Novinka" uses priceType 7 while its priceGroupType can remain zero.
     if (!reference && main?.priceGroupType === 0 && main.priceType !== 7) return { hidden: true };
     function candidate(value, promo = false) {
-      if (!value || !['string', 'number'].includes(typeof value.primaryPrice)) return null;
-      const price = String(value.primaryPrice).trim();
-      const amount = parsePriceAmount(price);
+      if (!value || typeof value !== 'object') return null;
+      const formatted = ['string', 'number'].includes(typeof value.primaryPrice)
+        ? String(value.primaryPrice).trim()
+        : '';
+      const displayedAmount = parsePriceAmount(formatted);
+      // Use the API's numeric amount if its localized display string cannot be parsed.
+      // Never substitute an alternative tag (instalments, rentals or bulk teaser prices).
+      const numericAmount =
+        typeof value.primaryPriceNoCurrency === 'number' &&
+        Number.isFinite(value.primaryPriceNoCurrency) &&
+        value.primaryPriceNoCurrency >= 0
+          ? value.primaryPriceNoCurrency
+          : null;
+      const amount = displayedAmount ?? numericAmount;
       if (amount === null) return null;
+      const price = displayedAmount === null ? formatPanelPrice(amount) : formatted;
       return {
         price, amount, promo, priceType: value.priceType,
         name: promo && typeof value.name === 'string' ? value.name.trim() : '',
@@ -868,19 +880,19 @@
 
   /* Icons from https://github.com/danielsebesta/fxalza (assets/emoji/small).
    * MIT License
-   *
+   * 
    * Copyright (c) 2026 Daniel Šebesta
-   *
+   * 
    * Permission is hereby granted, free of charge, to any person obtaining a copy
    * of this software and associated documentation files (the "Software"), to deal
    * in the Software without restriction, including without limitation the rights
    * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    * copies of the Software, and to permit persons to whom the Software is
    * furnished to do so, subject to the following conditions:
-   *
+   * 
    * The above copyright notice and this permission notice shall be included in all
    * copies or substantial portions of the Software.
-   *
+   * 
    * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -1800,9 +1812,25 @@
     if (response.status < 200 || response.status >= 300) throw new Error(LOG.apiHttp + response.status + '.');
     if (response.finalUrl && new URL(response.finalUrl).origin !== 'https://webapi.alza.cz') throw new Error(LOG.redirect);
     let data;
-    try { data = JSON.parse(response.responseText); }
+    try { data = JSON.parse(response.responseText.replace(/^\uFEFF/, '')); }
     catch { throw new Error(LOG.noPrice); }
-    if (!data || typeof data !== 'object') throw new Error(LOG.noPrice);
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      !extractPrice(data, true, { plus: true, cashback: true, tradeIn: true })
+    ) {
+      const pricing = data && typeof data === 'object' ? findPricing(data) : null;
+      // Log shape only: never dump response bodies, session identifiers or personal data.
+      warn(tier.name + ': Unusable pricing response', {
+        itemId: id,
+        responseType: typeof data,
+        pricingFound: Boolean(pricing),
+        mainPriceType: typeof pricing?.mainPriceTag?.primaryPrice,
+        numericPriceType: typeof pricing?.mainPriceTag?.primaryPriceNoCurrency,
+        promoCount: Array.isArray(pricing?.promoPrices) ? pricing.promoPrices.length : 0,
+      });
+      throw new Error(LOG.noPrice);
+    }
     cache.delete(url);
     parsedResponses.set(response, data);
     cache.set(url, { data, time: Date.now() });
