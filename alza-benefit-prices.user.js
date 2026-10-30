@@ -3,7 +3,7 @@
 // @icon         https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/photos/logo/logo.svg
 // @author       Dexnis
 // @namespace    alza-benefit-prices
-// @version      1.5.2
+// @version      1.5.3
 // @updateURL    https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @downloadURL  https://raw.githubusercontent.com/dexnis-dev/Alza-Benefit-Prices/main/alza-benefit-prices.user.js
 // @description  Userscript for Alza.cz, Alza.sk, Alza.hu, Alza.de and Alza.at that shows the prices of the Gold, Silver, ISIC, Bronze, B2B and Basic price lists
@@ -419,7 +419,7 @@
   // Match Hlídač shopů's plain prefix and expandable Render object.
   // Per-request diagnostics stay at Verbose level; warnings report actual failures.
   const LOG_PREFIX = 'Alza Benefit Prices – ';
-  const SCRIPT_VERSION = '1.5.2';
+  const SCRIPT_VERSION = '1.5.3';
   // Use a fixed format string so a coupon/product containing "%c" cannot style the console.
   const log = (message, ...details) => console.log('%s', LOG_PREFIX + message, ...details);
   const debug = (message, ...details) => console.debug('%s', LOG_PREFIX + message, ...details);
@@ -578,8 +578,9 @@
     const pricing = pricingMemo.get(data);
     if (!pricing) return null;
     const main = pricing.mainPriceTag;
-    // "Novinka" uses priceType 7 while its priceGroupType can remain zero.
-    if (!reference && main?.priceGroupType === 0 && main.priceType !== 7) return { hidden: true };
+    // New arrivals (7) and Black Friday (12) can carry real tier discounts even with group zero.
+    const campaignPrice = main?.priceType === 7 || main?.priceType === 12;
+    if (!reference && main?.priceGroupType === 0 && !campaignPrice) return { hidden: true };
     function candidate(value, promo = false) {
       if (!value || typeof value !== 'object') return null;
       const formatted = ['string', 'number'].includes(typeof value.primaryPrice)
@@ -617,7 +618,7 @@
     // When the original comparison price is missing, measure the coupon saving
     // against the main price before applying the coupon.
     const discountBase = compare || (selected?.promo ? mainCandidate : null);
-    if (!reference && (main?.priceType === 7 || main?.priceType === 4)) {
+    if (!reference && (campaignPrice || main?.priceType === 4)) {
       if (!selected || !discountBase || selected.amount === discountBase.amount) return { hidden: true };
     }
     if (selected) {
@@ -2006,7 +2007,7 @@
     row.tr.hidden = false;
   }
 
-  function updatePromoControls(state) {
+  function updatePromoControls(state, equalPrices = false) {
     if (!state.promoControls) return;
     const available = new Set();
     for (const row of state.rows) {
@@ -2017,7 +2018,7 @@
       }
     }
     for (const action of state.promoButtons) {
-      action.button.hidden = !available.has(action.type);
+      action.button.hidden = equalPrices || !available.has(action.type);
       const active = action.get();
       action.button.setAttribute('aria-pressed', String(active));
       action.button.title = (active ? T.excludePromo : T.includePromo).replace('{action}', () => action.label);
@@ -2046,7 +2047,6 @@
       if (!resolved) { row.error = LOG.noPrice; continue; }
       prices.push({ tier: row.tier, row, ...resolved });
     }
-    updatePromoControls(state);
     // #feature isic
     correctIsicPrices(prices);
     // #endfeature
@@ -2064,6 +2064,7 @@
     const compared = state.rows.filter(row => row.tier.reference || enabled[row.tier.name]);
     const equalPrices = compared.length > 1 && compared.every(row =>
       row.comparisonAmount !== null && row.comparisonAmount === compared[0].comparisonAmount);
+    updatePromoControls(state, equalPrices);
     const showNotice = equalPrices && !alwaysShow;
     const hasPrices = !showNotice && sorted.length > 0;
     const commonPrice = showNotice && basic?.valid ? basic.result : null;
